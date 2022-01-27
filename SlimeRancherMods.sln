@@ -1,0 +1,42 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31911.196
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestMod", "TestMod\TestMod.csproj", "{242110C0-5766-4DBB-AD54-A4C5BDE6D128}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{DBA9622D-34A0-45BC-BA2C-F2B4C87ADAE6}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		.gitignore = .gitignore
+		post-build.bat = post-build.bat
+		post-build.props = post-build.props
+		project.props = project.props
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prototypes", "prototypes", "{A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		debug|Any CPU = debug|Any CPU
+		release|Any CPU = release|Any CPU
+		testbuild|Any CPU = testbuild|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128}.debug|Any CPU.ActiveCfg = debug|Any CPU
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128}.debug|Any CPU.Build.0 = debug|Any CPU
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128}.release|Any CPU.ActiveCfg = release|Any CPU
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128}.release|Any CPU.Build.0 = release|Any CPU
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128}.testbuild|Any CPU.ActiveCfg = testbuild|Any CPU
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128}.testbuild|Any CPU.Build.0 = testbuild|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{242110C0-5766-4DBB-AD54-A4C5BDE6D128} = {A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6AD7E2D5-0330-4B39-8CB0-83BCD6B02039}
+	EndGlobalSection
+EndGlobal

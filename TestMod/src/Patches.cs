@@ -1,0 +1,5 @@
+﻿using HarmonyLib;
+
+namespace TestMod
+{
+}
