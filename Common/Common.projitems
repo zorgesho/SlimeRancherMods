@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects Condition="'$(MSBuildVersion)' == '' Or '$(MSBuildVersion)' &lt; '16.0'">$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>e15f4929-dad7-4db4-b0bb-57d20cde36aa</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Common</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)debug\Log.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)debug\Misc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)debug\ObjectDumper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)debug\Profiler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Misc.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Mod.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PathHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)reflection\Extensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)reflection\ReflectionHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)UnityExtensions.cs" />
+  </ItemGroup>
+</Project>

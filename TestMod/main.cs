@@ -1,19 +1,16 @@
 ﻿using SRML;
+using Common;
 
 namespace TestMod
 {
-	public class Main: ModEntryPoint
+	class Main: Mod, IModEntryPoint
 	{
-		public override void PreLoad()
-		{
-		}
+		public virtual void Load() {}
+		public virtual void PostLoad() {}
 
-		public override void Load()
+		public virtual void PreLoad()
 		{
-		}
-
-		public override void PostLoad()
-		{
+			init();
 		}
 	}
 }

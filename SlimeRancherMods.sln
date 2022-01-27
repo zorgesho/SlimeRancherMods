@@ -16,7 +16,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{DBA9622D-3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prototypes", "prototypes", "{A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "common", "common", "{00CDBCA6-E669-4EE2-A7C7-C7B936AD2D51}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shproj", "{E15F4929-DAD7-4DB4-B0BB-57D20CDE36AA}"
+EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Common\Common.projitems*{242110c0-5766-4dbb-ad54-a4c5bde6d128}*SharedItemsImports = 4
+		Common\Common.projitems*{e15f4929-dad7-4db4-b0bb-57d20cde36aa}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		debug|Any CPU = debug|Any CPU
 		release|Any CPU = release|Any CPU
@@ -35,6 +43,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{242110C0-5766-4DBB-AD54-A4C5BDE6D128} = {A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}
+		{E15F4929-DAD7-4DB4-B0BB-57D20CDE36AA} = {00CDBCA6-E669-4EE2-A7C7-C7B936AD2D51}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6AD7E2D5-0330-4B39-8CB0-83BCD6B02039}
