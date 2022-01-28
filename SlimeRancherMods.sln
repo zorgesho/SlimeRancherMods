@@ -22,9 +22,12 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common", "Common\Common.shp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstaVacpack", "InstaVacpack\InstaVacpack.csproj", "{E2CA5FBB-F4B6-4184-B2CA-6DDD6A74094F}"
 EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Common.UnityDebug", "Common\Common.UnityDebug\Common.UnityDebug.shproj", "{70F1D5D2-31DA-471D-9504-3FF971CB6A96}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Common\Common.projitems*{242110c0-5766-4dbb-ad54-a4c5bde6d128}*SharedItemsImports = 4
+		Common\Common.UnityDebug\Common.UnityDebug.projitems*{70f1d5d2-31da-471d-9504-3ff971cb6a96}*SharedItemsImports = 13
 		Common\Common.projitems*{e15f4929-dad7-4db4-b0bb-57d20cde36aa}*SharedItemsImports = 13
 		Common\Common.projitems*{e2ca5fbb-f4b6-4184-b2ca-6ddd6a74094f}*SharedItemsImports = 4
 	EndGlobalSection
@@ -54,6 +57,7 @@ Global
 		{242110C0-5766-4DBB-AD54-A4C5BDE6D128} = {A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}
 		{E15F4929-DAD7-4DB4-B0BB-57D20CDE36AA} = {00CDBCA6-E669-4EE2-A7C7-C7B936AD2D51}
 		{E2CA5FBB-F4B6-4184-B2CA-6DDD6A74094F} = {A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}
+		{70F1D5D2-31DA-471D-9504-3FF971CB6A96} = {00CDBCA6-E669-4EE2-A7C7-C7B936AD2D51}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6AD7E2D5-0330-4B39-8CB0-83BCD6B02039}
