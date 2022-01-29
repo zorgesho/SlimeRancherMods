@@ -44,6 +44,12 @@ namespace Common
 			static bool dumpProperties;
 			static bool dumpFields;
 
+			// for some reason access to these properties results in CTD
+			static readonly string[] restrictedProps =
+			{
+				"renderingDisplaySize"
+			};
+
 			public static string dump(GameObject go, bool dumpProperties, bool dumpFields)
 			{
 				output.Clear();
@@ -92,8 +98,13 @@ namespace Common
 							output.AppendLine($"{indent}{indentStep}PROPERTIES:");
 
 							foreach (var prop in properties)
+							{
+								if (restrictedProps.Contains(prop.Name))
+									continue;
+
 								if (prop.GetGetMethod() != null)
 									_dumpValue(prop.Name, prop.PropertyType, prop.GetValue(obj, null), indent);
+							}
 						}
 					}
 

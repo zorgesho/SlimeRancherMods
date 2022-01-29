@@ -11,6 +11,7 @@ using Common.UnityDebug;
 
 namespace InstaVacpack
 {
+	// when we trying to pull out an item from a storage
 	[HarmonyPatch(typeof(SiloCatcher), "OnTriggerStay")]
 	static class SiloCatcher_OnTriggerStay_Patch
 	{
@@ -29,6 +30,24 @@ namespace InstaVacpack
 			if (Mathf.Abs(Vector3.Angle(__instance.transform.forward, dir)) > 45f)
 				return false;
 
+			//// added code: begin
+			if (Input.GetKey(Config.instantModeKey))
+			{
+				var sourceSlot = __instance.getSelectedSlot();
+
+				if (sourceSlot != null)
+				{
+					var targetAmmo = Utils.playerAmmo;
+					int slotIdx = Utils.getUsableSlot(targetAmmo, sourceSlot.id);
+
+					if (slotIdx != -1)
+						Utils.tryTransferMaxAmount(__instance.storageSilo.GetRelevantAmmo(), __instance.slotIdx, targetAmmo, slotIdx);
+				}
+
+				return false;
+			}
+			//// added code: end
+
 			if (!__instance.Remove(out Identifiable.Id id))
 				return false;
 
@@ -42,6 +61,7 @@ namespace InstaVacpack
 		}
 	}
 
+	// when we trying to shoot an item to a storage
 	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
 	static class WeaponVacuum_Update_Patch
 	{
@@ -62,6 +82,23 @@ namespace InstaVacpack
 			float num = 1f;
 			if (Time.fixedTime >= __instance.nextShot && !__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.SHOOT)
 			{
+				//// added code: begin
+				if (Utils.tryGetPointedSilo(__instance, out var silo))
+				{
+					if (Input.GetKey(Config.instantModeKey))
+					{
+						if (silo.type != SiloCatcher.Type.SILO_DEFAULT) // TODO
+							return true;
+
+						var sourceAmmo = Utils.playerAmmo;
+						Utils.tryTransferMaxAmount(sourceAmmo, sourceAmmo.selectedAmmoIdx, silo.storageSilo.GetRelevantAmmo(), silo.slotIdx);
+						silo.storageSilo.OnAdded();
+
+						return false;
+					}
+				}
+				//// added code: end
+
 				__instance.Expel(inVac);
 				num = __instance.GetShootSpeedFactor(inVac);
 				__instance.nextShot = Time.fixedTime + __instance.shootCooldown / num;
@@ -119,12 +156,14 @@ namespace InstaVacpack
 			const int moneyStep = 10000;
 			const int moneyMax = 1000000;
 
-			static bool Prepare() => Config.Dbg.moneyCheat;
+			static bool Prepare() => Config.Dbg.playerCheats;
 
 			static void Postfix(PlayerState __instance)
 			{
 				if (__instance.model.currency < moneyMax)
 					__instance.AddCurrency(moneyStep);
+
+				__instance.SetEnergy(__instance.GetMaxEnergy());
 			}
 		}
 	}

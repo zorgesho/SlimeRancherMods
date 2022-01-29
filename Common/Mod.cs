@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using UnityEngine;
 
 namespace Common
 {
@@ -10,6 +11,7 @@ namespace Common
 		{
 #if DEBUG
 			System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+			Object.Destroy(SentrySdk._instance);
 #endif
 			"Mod inited".logDbg();
 		}
