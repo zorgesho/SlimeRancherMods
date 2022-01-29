@@ -11,6 +11,8 @@ namespace InstaVacpack
 		public virtual void PreLoad()
 		{
 			init();
+
+			HarmonyPatcher.GetInstance().PatchAll();
 		}
 	}
 }

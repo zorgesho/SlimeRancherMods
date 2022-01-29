@@ -30,6 +30,7 @@ Global
 		Common\Common.UnityDebug\Common.UnityDebug.projitems*{70f1d5d2-31da-471d-9504-3ff971cb6a96}*SharedItemsImports = 13
 		Common\Common.projitems*{e15f4929-dad7-4db4-b0bb-57d20cde36aa}*SharedItemsImports = 13
 		Common\Common.projitems*{e2ca5fbb-f4b6-4184-b2ca-6ddd6a74094f}*SharedItemsImports = 4
+		Common\Common.UnityDebug\Common.UnityDebug.projitems*{e2ca5fbb-f4b6-4184-b2ca-6ddd6a74094f}*SharedItemsImports = 4
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		debug|Any CPU = debug|Any CPU
