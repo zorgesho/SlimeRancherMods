@@ -11,6 +11,9 @@ namespace InstaVacpack
 			if (go.GetComponent<SiloCatcher>() is SiloCatcher siloCatcher)
 				return tryGetContainer(siloCatcher, id);
 
+			if (go.GetComponent<ScorePlort>() is ScorePlort scorePlort)
+				return new MarketContainer(scorePlort, id);
+
 			return null;
 		}
 
