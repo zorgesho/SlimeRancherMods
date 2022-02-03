@@ -46,6 +46,7 @@
     <Compile Include="src\containers\PlayerAmmoContainer.cs" />
     <Compile Include="src\containers\RefineryContainer.cs" />
     <Compile Include="src\containers\SiloContainer.cs" />
+    <Compile Include="src\containers\ViktorContainer.cs" />
     <Compile Include="src\IItemContainer.cs" />
     <Compile Include="src\Patches.cs" />
     <Compile Include="src\Utils.cs" />

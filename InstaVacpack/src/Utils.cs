@@ -6,6 +6,16 @@ namespace InstaVacpack
 {
 	static class Utils
 	{
+		public static bool runMultiple(Func<bool> action, int count)
+		{
+			bool result = true;
+
+			for (int i = 0; i < count; i++)
+				result &= action();
+
+			return result;
+		}
+
 		public static IItemContainer tryGetContainer(GameObject go, Identifiable.Id id = Identifiable.Id.NONE)
 		{
 			if (go.GetComponent<SiloCatcher>() is SiloCatcher siloCatcher)
@@ -23,6 +33,7 @@ namespace InstaVacpack
 			{
 				SiloCatcher.Type.SILO_DEFAULT => new SiloContainer(siloCatcher, id),
 				SiloCatcher.Type.SILO_OUTPUT_ONLY => new SiloOutputContainer(siloCatcher, id),
+				SiloCatcher.Type.VIKTOR_STORAGE => new ViktorContainer(siloCatcher, id),
 				SiloCatcher.Type.REFINERY => new RefineryContainer(id),
 				_ => null
 			};
