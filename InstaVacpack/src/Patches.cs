@@ -33,17 +33,10 @@ namespace InstaVacpack
 			//// added code: begin
 			if (Input.GetKey(Config.instantModeKey))
 			{
-				var sourceSlot = __instance.getSelectedSlot();
+				var source = Utils.tryGetContainer(__instance);
+				var target = new PlayerAmmoContainer(source.id);
 
-				if (sourceSlot != null)
-				{
-					var targetAmmo = Utils.playerAmmo;
-					int slotIdx = Utils.getUsableSlot(targetAmmo, sourceSlot.id);
-
-					if (slotIdx != -1)
-						Utils.tryTransferMaxAmount(__instance.storageSilo.GetRelevantAmmo(), __instance.slotIdx, targetAmmo, slotIdx);
-				}
-
+				Utils.tryTransferMaxAmount(source, target);
 				return false;
 			}
 			//// added code: end
@@ -65,6 +58,14 @@ namespace InstaVacpack
 	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
 	static class WeaponVacuum_Update_Patch
 	{
+		static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = Mathf.Infinity)
+		{
+			var tr = vacpack.vacOrigin.transform;
+			Physics.Raycast(new Ray(tr.position, tr.up), out RaycastHit hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
+
+			return hit.collider?.gameObject;
+		}
+
 		static bool Prefix(WeaponVacuum __instance)
 		{
 			if (Time.timeScale == 0f)
@@ -83,17 +84,14 @@ namespace InstaVacpack
 			if (Time.fixedTime >= __instance.nextShot && !__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.SHOOT)
 			{
 				//// added code: begin
-				if (Utils.tryGetPointedSilo(__instance, out var silo))
+				if (Input.GetKey(Config.instantModeKey))
 				{
-					if (Input.GetKey(Config.instantModeKey))
+					if (tryGetPointedObject(__instance) is GameObject go)
 					{
-						if (silo.type != SiloCatcher.Type.SILO_DEFAULT) // TODO
-							return true;
+						var source = new PlayerAmmoContainer();
+						var target = Utils.tryGetContainer(go, source.id);
 
-						var sourceAmmo = Utils.playerAmmo;
-						Utils.tryTransferMaxAmount(sourceAmmo, sourceAmmo.selectedAmmoIdx, silo.storageSilo.GetRelevantAmmo(), silo.slotIdx);
-						silo.storageSilo.OnAdded();
-
+						Utils.tryTransferMaxAmount(source, target);
 						return false;
 					}
 				}
