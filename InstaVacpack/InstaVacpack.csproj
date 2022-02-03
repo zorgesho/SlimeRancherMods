@@ -42,6 +42,7 @@
     <Compile Include="main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\containers\AmmoContainer.cs" />
+    <Compile Include="src\containers\DecorizerContainer.cs" />
     <Compile Include="src\containers\MarketContainer.cs" />
     <Compile Include="src\containers\PlayerAmmoContainer.cs" />
     <Compile Include="src\containers\RefineryContainer.cs" />
