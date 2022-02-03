@@ -20,6 +20,7 @@ namespace InstaVacpack
 			{
 				SiloCatcher.Type.SILO_DEFAULT => new SiloContainer(siloCatcher, id),
 				SiloCatcher.Type.SILO_OUTPUT_ONLY => new SiloOutputContainer(siloCatcher, id),
+				SiloCatcher.Type.REFINERY => new RefineryContainer(id),
 				_ => null
 			};
 		}

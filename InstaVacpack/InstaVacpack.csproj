@@ -43,6 +43,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="src\containers\AmmoContainer.cs" />
     <Compile Include="src\containers\PlayerAmmoContainer.cs" />
+    <Compile Include="src\containers\RefineryContainer.cs" />
     <Compile Include="src\containers\SiloContainer.cs" />
     <Compile Include="src\IItemContainer.cs" />
     <Compile Include="src\Patches.cs" />
