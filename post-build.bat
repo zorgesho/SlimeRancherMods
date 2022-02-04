@@ -10,4 +10,4 @@ set mods_path="c:\games\SlimeRancher\SRML\Mods"
 if not exist %mods_path% goto :eof
 
 echo =====
-xcopy %5*.* %mods_path%\%2\ /e /y
+xcopy %5*.* %mods_path%\ /e /y
