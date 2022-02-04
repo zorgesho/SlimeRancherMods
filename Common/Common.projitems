@@ -13,6 +13,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)debug\Misc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)debug\ObjectDumper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)debug\Profiler.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)harmony\CIHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)harmony\Debug.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Misc.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Mod.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PathHelper.cs" />
