@@ -1,11 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Collections.Generic;
 
 using HarmonyLib;
 using UnityEngine;
 
-using Common;
+using Common.Harmony;
 
 #if DEBUG
+using Common;
 using Common.UnityDebug;
 #endif
 
@@ -15,44 +19,38 @@ namespace InstaVacpack
 	[HarmonyPatch(typeof(SiloCatcher), "OnTriggerStay")]
 	static class SiloCatcher_OnTriggerStay_Patch
 	{
-		static bool Prefix(SiloCatcher __instance, Collider collider)
+		static bool processInstantMode(SiloCatcher siloCatcher)
 		{
-			if (!__instance.hasStarted || !__instance.isActiveAndEnabled || !__instance.type.HasOutput() || Time.time < __instance.nextEject)
+			if (!Input.GetKey(Config.instantModeKey))
 				return false;
 
-			var siloActivator = collider.GetComponentInParent<SiloActivator>();
+			var source = Utils.tryGetContainer(siloCatcher);
+			var target = new PlayerAmmoContainer(source.id);
 
-			if (siloActivator == null || !siloActivator.enabled)
-				return false;
+			bool result = Utils.tryTransferMaxAmount(source, target);
+			Utils.FX.playFX(result);
 
-			Vector3 dir = (collider.gameObject.transform.position - __instance.transform.position).normalized;
+			return true;
+		}
 
-			if (Mathf.Abs(Vector3.Angle(__instance.transform.forward, dir)) > 45f)
-				return false;
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
+		{
+			var list = cins.ToList();
+			int i = list.ciFindIndexForLast(ci => ci.isLDC(45f), ci => ci.isOp(OpCodes.Ret));
 
-			//// added code: begin
-			if (Input.GetKey(Config.instantModeKey))
-			{
-				var source = Utils.tryGetContainer(__instance);
-				var target = new PlayerAmmoContainer(source.id);
+			if (i == -1)
+				return cins;
 
-				bool result = Utils.tryTransferMaxAmount(source, target);
-				Utils.FX.playFX(result);
+			// insert 'processInstantMode' right before call to 'Remove'
+			// if instant mode is enabled we will ignore the rest of the method (no matter the result of the transfer)
+			var label = ilg.DefineLabel();
 
-				return false;
-			}
-			//// added code: end
-
-			if (!__instance.Remove(out Identifiable.Id id))
-				return false;
-
-			var prefab = SRSingleton<GameContext>.Instance.LookupDirector.GetPrefab(id);
-			var vacuumable = SRBehaviour.InstantiateActor(prefab, __instance.region.setId, __instance.transform.position + dir * 1.2f, __instance.transform.rotation, false).GetComponent<Vacuumable>();
-			__instance.vac.ForceJoint(vacuumable);
-			__instance.nextEject = Time.time + 0.25f / __instance.accelerationOutput.Factor;
-			__instance.accelerationOutput.OnTriggered();
-
-			return false;
+			return list.ciInsert(i + 1,
+				OpCodes.Ldarg_0,
+				CIHelper.emitCall<Func<SiloCatcher, bool>>(processInstantMode),
+				OpCodes.Brfalse, label,
+				OpCodes.Ret,
+				new CodeInstruction(OpCodes.Nop) { labels = { label } });
 		}
 	}
 
@@ -60,6 +58,23 @@ namespace InstaVacpack
 	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
 	static class WeaponVacuum_Update_Patch
 	{
+		static bool processInstantMode(WeaponVacuum vacpack)
+		{
+			if (!Input.GetKey(Config.instantModeKey))
+				return false;
+
+			if (tryGetPointedObject(vacpack) is not GameObject go)
+				return false;
+
+			var source = new PlayerAmmoContainer();
+			var target = Utils.tryGetContainer(go, source.id);
+
+			bool result = Utils.tryTransferMaxAmount(source, target);
+			Utils.FX.playFX(result, go);
+
+			return true;
+		}
+
 		static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = Mathf.Infinity)
 		{
 			var tr = vacpack.vacOrigin.transform;
@@ -68,66 +83,19 @@ namespace InstaVacpack
 			return hit.collider?.gameObject;
 		}
 
-		static bool Prefix(WeaponVacuum __instance)
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins)
 		{
-			if (Time.timeScale == 0f)
-				return false;
+			var list = cins.ToList();
+			int i = list.ciFindIndexForLast(ci => ci.isOp(OpCodes.Ldc_I4_1));
 
-			HashSet<GameObject> inVac = __instance.tracker.CurrColliders();
-			__instance.UpdateHud(inVac);
-			__instance.UpdateSlotForInputs();
-			__instance.UpdateVacModeForInputs();
+			if (i == -1)
+				return cins;
 
-			SRSingleton<SceneContext>.Instance.PlayerState.InGadgetMode = (__instance.vacMode == WeaponVacuum.VacMode.GADGET);
-			if (SRInput.Actions.attack.WasPressed || SRInput.Actions.vac.WasPressed || SRInput.Actions.burst.WasPressed)
-				__instance.launchedHeld = false;
-
-			float num = 1f;
-			if (Time.fixedTime >= __instance.nextShot && !__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.SHOOT)
-			{
-				//// added code: begin
-				if (Input.GetKey(Config.instantModeKey))
-				{
-					if (tryGetPointedObject(__instance) is GameObject go)
-					{
-						var source = new PlayerAmmoContainer();
-						var target = Utils.tryGetContainer(go, source.id);
-
-						bool result = Utils.tryTransferMaxAmount(source, target);
-						Utils.FX.playFX(result, go);
-
-						return false;
-					}
-				}
-				//// added code: end
-
-				__instance.Expel(inVac);
-				num = __instance.GetShootSpeedFactor(inVac);
-				__instance.nextShot = Time.fixedTime + __instance.shootCooldown / num;
-			}
-
-			if (__instance.vacAnimator != null)
-				__instance.vacAnimator.speed = num;
-
-			if (!__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.VAC)
-			{
-				__instance.vacAudioHandler.SetActive(true);
-				__instance.vacFX.SetActive(__instance.held == null);
-				__instance.siloActivator.enabled = (__instance.held == null);
-
-				if (__instance.held != null)
-					__instance.UpdateHeld(inVac);
-				else
-					__instance.Consume(inVac);
-			}
-			else
-			{
-				__instance.ClearVac();
-			}
-
-			__instance.UpdateVacAnimators();
-
-			return false;
+			// insert 'processInstantMode' right before call to 'Expel'
+			return list.ciInsert(i + 2,
+				OpCodes.Ldarg_0,
+				CIHelper.emitCall<Func<WeaponVacuum, bool>>(processInstantMode),
+				OpCodes.Brtrue, list[i + 1].operand);
 		}
 	}
 
