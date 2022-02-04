@@ -36,7 +36,9 @@ namespace InstaVacpack
 				var source = Utils.tryGetContainer(__instance);
 				var target = new PlayerAmmoContainer(source.id);
 
-				Utils.tryTransferMaxAmount(source, target);
+				bool result = Utils.tryTransferMaxAmount(source, target);
+				Utils.FX.playFX(result);
+
 				return false;
 			}
 			//// added code: end
@@ -91,7 +93,9 @@ namespace InstaVacpack
 						var source = new PlayerAmmoContainer();
 						var target = Utils.tryGetContainer(go, source.id);
 
-						Utils.tryTransferMaxAmount(source, target);
+						bool result = Utils.tryTransferMaxAmount(source, target);
+						Utils.FX.playFX(result, go);
+
 						return false;
 					}
 				}

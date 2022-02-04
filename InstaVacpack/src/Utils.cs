@@ -1,5 +1,8 @@
 ﻿using System;
+
+using HarmonyLib;
 using UnityEngine;
+
 using Common;
 
 namespace InstaVacpack
@@ -55,6 +58,63 @@ namespace InstaVacpack
 			int toTransfer = Math.Min(source.count, freeSpaceInTarget);
 																														$"tryTransferMaxAmount: free space in target is {freeSpaceInTarget}, trying to transfer {toTransfer} items".logDbg();
 			return toTransfer > 0 && source.remove(toTransfer) && target.add(toTransfer); // can potentially fail in the middle
+		}
+
+
+		public static class FX
+		{
+			const int gapFrames = 10;
+
+			// we need this and VacModeWatcher patch to avoid playing fx continuously while vacpack in the shoot/vac mode
+			static int lastFramePlayedFX;
+
+			static WeaponVacuum vacpack => SRSingleton<SceneContext>.Instance.Player.GetComponentInChildren<WeaponVacuum>();
+
+			public static void playFX(bool success, GameObject go = null)
+			{
+				if (lastFramePlayedFX > VacModeWatcher.lastFrameChanged - gapFrames)
+					return;
+
+				if (!success)
+					vacpack.CaptureFailedEffect();
+				else if (go)
+					playSuccessFX(go);
+				else
+					vacpack.CaptureEffect();
+
+				lastFramePlayedFX = Time.frameCount;
+			}
+
+			static void playSuccessFX(GameObject go)
+			{
+				var tr = go.transform;
+
+				if (go.GetComponent<SiloCatcher>() is SiloCatcher siloCatcher)
+				{
+					SRBehaviour.SpawnAndPlayFX(siloCatcher.storeFX, tr.position, tr.rotation);
+					siloCatcher.audioSource.Play();
+				}
+
+				if (go.GetComponent<ScorePlort>() is ScorePlort scorePlort)
+					SRBehaviour.SpawnAndPlayFX(scorePlort.ExplosionFX, tr.position, tr.rotation);
+			}
+
+			[HarmonyPatch(typeof(WeaponVacuum), "UpdateVacModeForInputs")]
+			static class VacModeWatcher
+			{
+				public static int lastFrameChanged { get; private set; }
+
+				static WeaponVacuum.VacMode prevVacMode;
+
+				static void Postfix(WeaponVacuum __instance)
+				{
+					if (__instance.vacMode == prevVacMode)
+						return;
+
+					prevVacMode = __instance.vacMode;
+					lastFrameChanged = Time.frameCount;																	$"VacModeWatcher: vac mode {prevVacMode}, frame: {lastFrameChanged}".logDbg();
+				}
+			}
 		}
 	}
 }
