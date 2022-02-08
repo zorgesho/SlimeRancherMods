@@ -9,5 +9,6 @@ namespace SmartVacpack
 #endif
 	static class Config
 	{
+		public static readonly bool returnDroppedToSilo = true;
 	}
 }

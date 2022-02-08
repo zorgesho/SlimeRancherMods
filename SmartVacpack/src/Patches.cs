@@ -16,6 +16,14 @@ namespace SmartVacpack
 			return hit.collider?.gameObject;
 		}
 
+		static bool couldAddToSlot(this Ammo ammo, Identifiable.Id id, int slotIdx, int count = 1)
+		{
+			if (!ammo.CouldAddToSlot(id, slotIdx, false))
+				return false;
+
+			return ammo.GetSlotMaxCount(slotIdx) - ammo.GetSlotCount(slotIdx) >= count;
+		}
+
 		static bool processShootMode(WeaponVacuum vac)
 		{
 			if (vac.vacMode != WeaponVacuum.VacMode.SHOOT)
@@ -27,7 +35,7 @@ namespace SmartVacpack
 			var id = vac.player.Ammo.GetSelectedId();
 			var ammo = silo.storageSilo.GetRelevantAmmo();
 
-			return ammo.CouldAddToSlot(id, silo.slotIdx, false); // TODO consider already flying too
+			return ammo.couldAddToSlot(id, silo.slotIdx, FlyingItems.expItemsCount + 1);
 		}
 
 		static bool processVacMode(WeaponVacuum vac)
@@ -41,17 +49,10 @@ namespace SmartVacpack
 		public static bool processVacMode(WeaponVacuum vac, SiloCatcher silo)
 		{
 			var ammo = silo.storageSilo.GetRelevantAmmo();
+			var id = ammo.Slots[silo.slotIdx]?.id ?? Identifiable.Id.NONE;
+			int maxAmmo = vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
 
-			if (silo.slotIdx < ammo.ammoModel.usableSlots)
-			{
-				var slot = ammo.Slots[silo.slotIdx];
-				var id = ammo.AdjustId(slot?.id ?? Identifiable.Id.NONE);
-
-				if (vac.player.Ammo.GetCount(id) == 100) // TODO actual max count and consider flying items
-					return false;
-			}
-
-			return true;
+			return vac.player.Ammo.GetCount(id) < maxAmmo;
 		}
 
 		static bool Prefix(WeaponVacuum __instance)
