@@ -16,6 +16,44 @@ namespace SmartVacpack
 			return hit.collider?.gameObject;
 		}
 
+		static bool processShootMode(WeaponVacuum vac)
+		{
+			if (vac.vacMode != WeaponVacuum.VacMode.SHOOT)
+				return true;
+
+			if (tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
+				return true;
+
+			var id = vac.player.Ammo.GetSelectedId();
+			var ammo = silo.storageSilo.GetRelevantAmmo();
+
+			return ammo.CouldAddToSlot(id, silo.slotIdx, false); // TODO consider already flying too
+		}
+
+		static bool processVacMode(WeaponVacuum vac)
+		{
+			if (tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is SiloCatcher silo)
+				return processVacMode(vac, silo);
+
+			return true;
+		}
+
+		public static bool processVacMode(WeaponVacuum vac, SiloCatcher silo)
+		{
+			var ammo = silo.storageSilo.GetRelevantAmmo();
+
+			if (silo.slotIdx < ammo.ammoModel.usableSlots)
+			{
+				var slot = ammo.Slots[silo.slotIdx];
+				var id = ammo.AdjustId(slot?.id ?? Identifiable.Id.NONE);
+
+				if (vac.player.Ammo.GetCount(id) == 100) // TODO actual max count and consider flying items
+					return false;
+			}
+
+			return true;
+		}
+
 		static bool Prefix(WeaponVacuum __instance)
 		{
 			if (Time.timeScale == 0f)
@@ -33,18 +71,7 @@ namespace SmartVacpack
 			float num = 1f;
 
 			//// added code: begin
-			bool actionDisabled = false;
-
-			if (__instance.vacMode == WeaponVacuum.VacMode.SHOOT)
-			{
-				if (tryGetPointedObject(__instance)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
-					return true;
-
-				var id = __instance.player.Ammo.GetSelectedId();
-				var ammo = silo.storageSilo.GetRelevantAmmo();
-
-				actionDisabled = !ammo.CouldAddToSlot(id, silo.slotIdx, false); // TODO consider already flying too
-			}
+			bool actionDisabled = !processShootMode(__instance);
 			//// added code: end
 
 			if (Time.fixedTime >= __instance.nextShot && !__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.SHOOT)
@@ -62,19 +89,7 @@ namespace SmartVacpack
 			if (!__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.VAC)
 			{
 				//// added code: begin
-				if (tryGetPointedObject(__instance)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
-					return true;
-
-				var ammo = silo.storageSilo.GetRelevantAmmo();
-
-				if (silo.slotIdx < ammo.ammoModel.usableSlots)
-				{
-					var slot = ammo.Slots[silo.slotIdx];
-					var id = ammo.AdjustId(slot.id);
-
-					if (__instance.player.Ammo.GetCount(id) == 100) // TODO actual max count and consider flying items
-						actionDisabled = true;
-				}
+				actionDisabled = !processVacMode(__instance);
 				//// added code: end
 
 				if (!actionDisabled) // <<< added
@@ -148,5 +163,14 @@ namespace SmartVacpack
 
 			return false;
 		}
+	}
+
+	// in case we trying to use the storage, but raycast in WeaponVacuum_Update_Patch misses the silo catcher
+	// vacpack anims will be played, but items will stay in the storage
+	[HarmonyPatch(typeof(SiloCatcher), "Remove")]
+	static class SiloCatcher_Remove_Patch
+	{
+		static bool Prefix(SiloCatcher __instance, ref bool __result) =>
+			__result = WeaponVacuum_Update_Patch.processVacMode(__instance.vac, __instance);
 	}
 }
