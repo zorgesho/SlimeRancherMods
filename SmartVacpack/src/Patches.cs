@@ -1,7 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Linq;
+using System.Reflection.Emit;
+using System.Collections.Generic;
 
 using HarmonyLib;
 using UnityEngine;
+
+using Common.Harmony;
 
 namespace SmartVacpack
 {
@@ -32,6 +37,9 @@ namespace SmartVacpack
 			if (tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
 				return true;
 
+			if (silo.type is not (SiloCatcher.Type.SILO_DEFAULT or SiloCatcher.Type.SILO_OUTPUT_ONLY)) // TODO
+				return true;
+
 			var id = vac.player.Ammo.GetSelectedId();
 			var ammo = silo.storageSilo.GetRelevantAmmo();
 
@@ -48,6 +56,9 @@ namespace SmartVacpack
 
 		public static bool processVacMode(WeaponVacuum vac, SiloCatcher silo)
 		{
+			if (silo.type is not (SiloCatcher.Type.SILO_DEFAULT or SiloCatcher.Type.SILO_OUTPUT_ONLY)) // TODO
+				return true;
+
 			var ammo = silo.storageSilo.GetRelevantAmmo();
 			var id = ammo.Slots[silo.slotIdx]?.id ?? Identifiable.Id.NONE;
 			int maxAmmo = vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
@@ -55,76 +66,68 @@ namespace SmartVacpack
 			return vac.player.Ammo.GetCount(id) < maxAmmo;
 		}
 
-		static bool Prefix(WeaponVacuum __instance)
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
 		{
-			if (Time.timeScale == 0f)
-				return false;
+			var list = cins.ToList();
+			var actionEnabled = ilg.DeclareLocal(typeof(bool));
 
-			HashSet<GameObject> inVac = __instance.tracker.CurrColliders();
-			__instance.UpdateHud(inVac);
-			__instance.UpdateSlotForInputs();
-			__instance.UpdateVacModeForInputs();
+			var label1 = ilg.DefineLabel();
+			var label2 = ilg.DefineLabel();
 
-			SRSingleton<SceneContext>.Instance.PlayerState.InGadgetMode = (__instance.vacMode == WeaponVacuum.VacMode.GADGET);
-			if (SRInput.Actions.attack.WasPressed || SRInput.Actions.vac.WasPressed || SRInput.Actions.burst.WasPressed)
-				__instance.launchedHeld = false;
+			var call_Expel = new CIHelper.MemberMatch(nameof(WeaponVacuum.Expel));
+			var call_SetActive = new CIHelper.MemberMatch("SetActive");
 
-			float num = 1f;
+			// inserting call to 'processShootMode' _before_ line with 'nextShot' check (so we can call it on each frame)
+			list.ciInsert(ci => ci.isLDC(1f), +2, 1,
+				OpCodes.Ldarg_0,
+				CIHelper.emitCall<Func<WeaponVacuum, bool>>(processShootMode),
+				OpCodes.Stloc, actionEnabled);
 
-			//// added code: begin
-			bool actionDisabled = !processShootMode(__instance);
-			//// added code: end
+			// don't call 'Expel' if current action is disabled
+			list.ciInsert(call_Expel, -2, 1, OpCodes.Ldloc, actionEnabled, OpCodes.Brfalse, label1);
+			list.ciInsert(call_Expel, CIHelper.emitLabel(label1));
 
-			if (Time.fixedTime >= __instance.nextShot && !__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.SHOOT)
+			// inserting call to 'processVacMode' after 'vacMode == VacMode.VAC'
+			list.ciInsert(ci => ci.isOp(OpCodes.Ldc_I4_2), +2, 1,
+				OpCodes.Ldarg_0,
+				CIHelper.emitCall<Func<WeaponVacuum, bool>>(processVacMode),
+				OpCodes.Stloc, actionEnabled);
+
+			int[] ii = list.ciFindIndexes(
+				ci => ci.isOp(OpCodes.Ldc_I4_2), // vacMode == VacMode.VAC
+				call_SetActive, // this.vacAudioHandler.SetActive(true);
+				call_SetActive, // this.vacFX.SetActive(this.held == null);
+				new CIHelper.MemberMatch("set_enabled")); // this.siloActivator.enabled = (this.held == null);
+
+			if (ii == null)
+				return cins;
+
+			// disabling various stuff in 'VacMode.VAC' block if current action is disabled
+			for (int i = 3; i > 0; i--)
 			{
-				if (!actionDisabled) // <<< added
-					__instance.Expel(inVac);
+				var label = ilg.DefineLabel();
 
-				num = __instance.GetShootSpeedFactor(inVac);
-				__instance.nextShot = Time.fixedTime + __instance.shootCooldown / num;
+				list.ciInsert(ii[i],
+					OpCodes.Ldloc, actionEnabled,
+					OpCodes.Brtrue, label,
+					OpCodes.Pop,
+					OpCodes.Ldc_I4_0,
+					CIHelper.emitLabel(label));
 			}
 
-			if (__instance.vacAnimator != null)
-				__instance.vacAnimator.speed = num;
+			// disable vacpack animations for this frame if current action is disabled
+			list.ciInsert(new CIHelper.MemberMatch(nameof(WeaponVacuum.UpdateVacAnimators)), 0, 1,
+				OpCodes.Ldloc, actionEnabled,
+				OpCodes.Brtrue, label2,
+				CIHelper.emitCall<Action>(WeaponVacuum_UpdateVacAnimators_Patch.disableAnimsForFrame),
+				CIHelper.emitLabel(label2));
 
-			if (!__instance.launchedHeld && __instance.vacMode == WeaponVacuum.VacMode.VAC)
-			{
-				//// added code: begin
-				actionDisabled = !processVacMode(__instance);
-				//// added code: end
-
-				if (!actionDisabled) // <<< added
-				{
-					__instance.vacAudioHandler.SetActive(true);
-					__instance.vacFX.SetActive(__instance.held == null);
-					__instance.siloActivator.enabled = (__instance.held == null);
-				}
-				else // <<< added
-				{
-					__instance.vacAudioHandler.SetActive(false);
-					__instance.vacFX.SetActive(false);
-					__instance.siloActivator.enabled = false;
-				}
-
-				if (__instance.held != null)
-					__instance.UpdateHeld(inVac);
-				else
-					__instance.Consume(inVac);
-			}
-			else
-			{
-				__instance.ClearVac();
-			}
-
-			if (actionDisabled) // <<< added
-				WeaponVacuum_UpdateVacAnimators_Patch.disableAnimsForFrame();
-
-			__instance.UpdateVacAnimators();
-
-			return false;
+			return list;
 		}
 	}
 
+
+	// correctly disabling animations for one frame if current action is disabled
 	[HarmonyPatch(typeof(WeaponVacuum), "UpdateVacAnimators")]
 	static class WeaponVacuum_UpdateVacAnimators_Patch
 	{
@@ -133,38 +136,20 @@ namespace SmartVacpack
 		public static void disableAnimsForFrame() => disableAnims = true;
 		static bool isDisabled() => disableAnims && !(disableAnims = false);
 
-		static bool Prefix(WeaponVacuum __instance)
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
 		{
-			bool flag = __instance.playerModel.hasAirBurst && SRInput.Actions.burst.WasPressed;
-			bool flag2 = __instance.vacMode == WeaponVacuum.VacMode.SHOOT || __instance.vacMode == WeaponVacuum.VacMode.VAC || flag;
-			bool flag3 = __instance.vacMode == WeaponVacuum.VacMode.VAC;
+			var label = ilg.DefineLabel();
 
-			if (isDisabled()) // <<< added
-			{
-				flag2 = flag;
-				flag3 = false;
-			}
-
-			if (__instance.vacAnimator == null)
-			{
-				__instance.vacAnimator = __instance.GetComponentInChildren<Animator>();
-				__instance.vacColorAnimator = __instance.GetComponentInChildren<VacColorAnimator>();
-			}
-
-			__instance.vacAnimator.SetBool(__instance.animActiveId, flag2);
-			__instance.vacAnimator.SetBool(__instance.animVacModeId, flag3);
-			__instance.vacAnimator.SetBool(__instance.animHoldingId, __instance.held != null);
-			__instance.vacColorAnimator.SetVacActive(flag2);
-			__instance.vacColorAnimator.SetVacMode(flag3);
-
-			if (flag)
-				__instance.AirBurst();
-
-			__instance.vacAnimator.SetBool(__instance.animSprintingId, __instance.playerEvents.Run.Active);
-
-			return false;
+			// insert right after assigning all the flags
+			return cins.ciInsert(ci => ci.isOp(OpCodes.Stloc_2),
+				CIHelper.emitCall<Func<bool>>(isDisabled),
+				OpCodes.Brfalse, label,
+				OpCodes.Ldloc_0, OpCodes.Stloc_1,	// flag2 = flag;
+				OpCodes.Ldc_I4_0, OpCodes.Stloc_2,	// flag3 = false;
+				CIHelper.emitLabel(label));
 		}
 	}
+
 
 	// in case we trying to use the storage, but raycast in WeaponVacuum_Update_Patch misses the silo catcher
 	// vacpack anims will be played, but items will stay in the storage

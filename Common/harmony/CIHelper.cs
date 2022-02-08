@@ -57,6 +57,11 @@ namespace Common.Harmony
 			return new CodeInstruction(OpCodes.Call, func.Method);
 		}
 
+		public static CodeInstruction emitLabel(Label label)
+		{
+			return new CodeInstruction(OpCodes.Nop) { labels = { label } };
+		}
+
 		#region CIList methods
 
 		// makes new list with cloned CodeInstructions
