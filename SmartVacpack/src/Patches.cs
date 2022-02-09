@@ -59,11 +59,13 @@ namespace SmartVacpack
 			if (!silo.hasSiloStorage())
 				return true;
 
-			var ammo = silo.storageSilo.GetRelevantAmmo();
-			var id = ammo.Slots[silo.slotIdx]?.id ?? Identifiable.Id.NONE;
-			int maxAmmo = vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
+			var playerAmmo = vac.player.Ammo;
+			var id = silo.storageSilo.GetRelevantAmmo().GetSlotName(silo.slotIdx);
 
-			return vac.player.Ammo.GetCount(id) < maxAmmo;
+			if (!Config.sameMultipleSlots)
+				return vac.player.Ammo.GetCount(id) < vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
+
+			return Enumerable.Range(0, playerAmmo.GetUsableSlotCount()).Any(i => playerAmmo.couldAddToSlot(id, i, FlyingItems.vacItemsCount + 1));
 		}
 
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
@@ -126,7 +128,6 @@ namespace SmartVacpack
 		}
 	}
 
-
 	// correctly disabling animations for one frame if current action is disabled
 	[HarmonyPatch(typeof(WeaponVacuum), "UpdateVacAnimators")]
 	static class WeaponVacuum_UpdateVacAnimators_Patch
@@ -150,6 +151,28 @@ namespace SmartVacpack
 		}
 	}
 
+	// allows to use multiple slots for the same type of items
+	[HarmonyPatch(typeof(Ammo), "MaybeAddToSlot")]
+	static class Ammo_MaybeAddToSlot_Patch
+	{
+		static bool Prepare() => Config.sameMultipleSlots;
+
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins)
+		{
+			var list = cins.ToList();
+
+			int[] i = list.ciFindIndexes(
+				OpCodes.Br,
+				OpCodes.Brfalse,   // label for 'continue'
+				OpCodes.Ldc_I4_1); // flag3 = true;
+
+			if (i == null)
+				return cins;
+
+			// adding 'continue' right before 'flag3 = true;'
+			return list.ciInsert(i[2], OpCodes.Br, list[i[1]].operand);
+		}
+	}
 
 	// in case we trying to use the storage, but raycast in WeaponVacuum_Update_Patch misses the silo catcher
 	// vacpack anims will be played, but items will stay in the storage
