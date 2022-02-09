@@ -4,7 +4,6 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 
 using HarmonyLib;
-using UnityEngine;
 
 using Common.Harmony;
 
@@ -13,42 +12,43 @@ namespace SmartVacpack
 	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
 	static class WeaponVacuum_Update_Patch
 	{
-		static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = Mathf.Infinity)
-		{
-			var tr = vacpack.vacOrigin.transform;
-			Physics.Raycast(new Ray(tr.position, tr.up), out RaycastHit hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
-
-			return hit.collider?.gameObject;
-		}
-
-		static bool couldAddToSlot(this Ammo ammo, Identifiable.Id id, int slotIdx, int count = 1)
-		{
-			if (!ammo.CouldAddToSlot(id, slotIdx, false))
-				return false;
-
-			return ammo.GetSlotMaxCount(slotIdx) - ammo.GetSlotCount(slotIdx) >= count;
-		}
-
 		static bool processShootMode(WeaponVacuum vac)
 		{
 			if (vac.vacMode != WeaponVacuum.VacMode.SHOOT)
 				return true;
 
-			if (tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
-				return true;
-
-			if (silo.type is not (SiloCatcher.Type.SILO_DEFAULT or SiloCatcher.Type.SILO_OUTPUT_ONLY)) // TODO
-				return true;
-
 			var id = vac.player.Ammo.GetSelectedId();
-			var ammo = silo.storageSilo.GetRelevantAmmo();
 
-			return ammo.couldAddToSlot(id, silo.slotIdx, FlyingItems.expItemsCount + 1);
+			if (id == Identifiable.Id.NONE)
+				return true;
+
+			if (Utils.tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
+				return true;
+
+			if (!silo.hasSiloStorage())
+				return true;
+
+			var ammo = silo.storageSilo.GetRelevantAmmo();
+			bool couldUseCurrentSlot = ammo.couldAddToSlot(id, silo.slotIdx, FlyingItems.expItemsCount + 1);
+
+			if (couldUseCurrentSlot && (Config.preferEmptySlots || ammo.GetSlotCount(silo.slotIdx) > 0))
+				return true;
+
+			if (silo.getActivator() is not SiloStorageActivator storageActivator)
+				return false;
+
+			int bestSlot = Utils.getBestSlot(ammo, id, true, true, storageActivator.getSlots(), silo.slotIdx);
+
+			if (bestSlot == -1 || silo.slotIdx == bestSlot)
+				return false;
+
+			storageActivator.setSlot(bestSlot);
+			return true;
 		}
 
 		static bool processVacMode(WeaponVacuum vac)
 		{
-			if (tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is SiloCatcher silo)
+			if (Utils.tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is SiloCatcher silo)
 				return processVacMode(vac, silo);
 
 			return true;
@@ -56,7 +56,7 @@ namespace SmartVacpack
 
 		public static bool processVacMode(WeaponVacuum vac, SiloCatcher silo)
 		{
-			if (silo.type is not (SiloCatcher.Type.SILO_DEFAULT or SiloCatcher.Type.SILO_OUTPUT_ONLY)) // TODO
+			if (!silo.hasSiloStorage())
 				return true;
 
 			var ammo = silo.storageSilo.GetRelevantAmmo();
