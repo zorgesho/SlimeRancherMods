@@ -21,26 +21,12 @@
   <ItemGroup>
     <Reference Include="0Harmony" />
     <Reference Include="Assembly-CSharp.pb" />
-    <Reference Include="InControl">
-      <HintPath>..\..\..\..\games\SlimeRancher\SlimeRancher_Data\Managed\InControl.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json" />
     <Reference Include="SRML" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine" />
-    <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>..\..\..\..\games\SlimeRancher\SlimeRancher_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine.CoreModule" />
-    <Reference Include="UnityEngine.InputLegacyModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\games\SlimeRancher\SlimeRancher_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\.libs\UnityEngine.PhysicsModule.dll</HintPath>
-    </Reference>
+    <Reference Include="UnityEngine.PhysicsModule" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="config.cs" />

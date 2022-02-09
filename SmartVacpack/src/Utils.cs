@@ -9,7 +9,7 @@ namespace SmartVacpack
 {
 	static class Utils
 	{
-		public static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = Mathf.Infinity)
+		public static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = 10f)
 		{
 			var tr = vacpack.vacOrigin.transform;
 			Physics.Raycast(new Ray(tr.position, tr.up), out RaycastHit hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);

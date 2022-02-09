@@ -18,6 +18,8 @@ namespace SmartVacpack
 		public static int vacItemsCount => VacItem.counter;
 		public static int expItemsCount => ExpItem.counter;
 
+		public static bool isAnyItem() => vacItemsCount > 0 || expItemsCount > 0;
+
 		#region counters
 		abstract class Counter<T>: MonoBehaviour where T: class
 		{
@@ -60,6 +62,16 @@ namespace SmartVacpack
 
 			IEnumerator Start()
 			{
+				// for some reason in rare cases item stays in 'isCaptive' state
+				// so we will ignore it after enough amount of time
+				IEnumerator _delayedDestroy()
+				{
+					yield return new WaitForSeconds(5f);
+					Destroy(this);
+				}
+
+				StartCoroutine(_delayedDestroy());
+
 				var vacuumable = GetComponent<Vacuumable>();
 				yield return new WaitWhile(() => vacuumable.isCaptive());
 				yield return new WaitForSeconds(.3f);

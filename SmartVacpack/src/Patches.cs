@@ -9,6 +9,8 @@ using Common.Harmony;
 
 namespace SmartVacpack
 {
+	// We process shoot/vac modes here.
+	// Disable vacpack in case current action is impossible, switch silo slots if necessary.
 	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
 	static class WeaponVacuum_Update_Patch
 	{
@@ -20,7 +22,7 @@ namespace SmartVacpack
 			var id = vac.player.Ammo.GetSelectedId();
 
 			if (id == Identifiable.Id.NONE)
-				return true;
+				return false;
 
 			if (Utils.tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
 				return true;
@@ -35,11 +37,11 @@ namespace SmartVacpack
 				return true;
 
 			if (silo.getActivator() is not SiloStorageActivator storageActivator)
-				return false;
+				return couldUseCurrentSlot;
 
-			int bestSlot = Utils.getBestSlot(ammo, id, true, true, storageActivator.getSlots(), silo.slotIdx);
+			int bestSlot = Utils.getBestSlot(ammo, id, true, !Config.preferEmptySlots, storageActivator.getSlots(), silo.slotIdx);
 
-			if (bestSlot == -1 || silo.slotIdx == bestSlot)
+			if (bestSlot == -1 || (silo.slotIdx == bestSlot && ammo.GetSlotName(bestSlot) != Identifiable.Id.NONE))
 				return false;
 
 			storageActivator.setSlot(bestSlot);
@@ -61,9 +63,10 @@ namespace SmartVacpack
 
 			var playerAmmo = vac.player.Ammo;
 			var id = silo.storageSilo.GetRelevantAmmo().GetSlotName(silo.slotIdx);
+			bool isSlotAvailable = playerAmmo.CouldAddToSlot(id);
 
 			if (!Config.sameMultipleSlots)
-				return vac.player.Ammo.GetCount(id) < vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
+				return isSlotAvailable && playerAmmo.GetCount(id) < vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
 
 			return Enumerable.Range(0, playerAmmo.GetUsableSlotCount()).Any(i => playerAmmo.couldAddToSlot(id, i, FlyingItems.vacItemsCount + 1));
 		}
@@ -113,7 +116,7 @@ namespace SmartVacpack
 					OpCodes.Ldloc, actionEnabled,
 					OpCodes.Brtrue, label,
 					OpCodes.Pop,
-					OpCodes.Ldc_I4_0,
+					i == 3? OpCodes.Ldc_I4_0: CIHelper.emitCall<Func<bool>>(FlyingItems.isAnyItem),
 					CIHelper.emitLabel(label));
 			}
 
@@ -135,7 +138,7 @@ namespace SmartVacpack
 		static bool disableAnims = false;
 
 		public static void disableAnimsForFrame() => disableAnims = true;
-		static bool isDisabled() => disableAnims && !(disableAnims = false);
+		static bool isDisabled() => disableAnims && !(disableAnims = false) && !FlyingItems.isAnyItem();
 
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
 		{
@@ -174,8 +177,8 @@ namespace SmartVacpack
 		}
 	}
 
-	// in case we trying to use the storage, but raycast in WeaponVacuum_Update_Patch misses the silo catcher
-	// vacpack anims will be played, but items will stay in the storage
+	// In case we trying to use the storage, but raycast in WeaponVacuum_Update_Patch misses the silo catcher.
+	// Vacpack anims will be played, but items will stay in the storage.
 	[HarmonyPatch(typeof(SiloCatcher), "Remove")]
 	static class SiloCatcher_Remove_Patch
 	{
