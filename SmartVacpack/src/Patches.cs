@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 
 using HarmonyLib;
+using UnityEngine;
 
 using Common.Harmony;
 
@@ -131,14 +132,29 @@ namespace SmartVacpack
 		}
 	}
 
-	// correctly disabling animations for one frame if current action is disabled
+	// correctly disabling animations for one frame if current action is disabled (and playing fail fx if necessary)
 	[HarmonyPatch(typeof(WeaponVacuum), "UpdateVacAnimators")]
 	static class WeaponVacuum_UpdateVacAnimators_Patch
 	{
-		static bool disableAnims = false;
+		const int effectGapFrames = 30;
+		static int frameEffectPlayed = 0;
 
+		static bool disableAnims = false;
 		public static void disableAnimsForFrame() => disableAnims = true;
-		static bool isDisabled() => disableAnims && !(disableAnims = false) && !FlyingItems.isAnyItem();
+
+		static bool updateAnims(WeaponVacuum vac)
+		{
+			bool disabled = disableAnims && !FlyingItems.isAnyItem();
+			disableAnims = false;
+
+			if (disabled && Utils.frameVacModeChanged == Time.frameCount && frameEffectPlayed < Time.frameCount - effectGapFrames)
+			{
+				vac.CaptureFailedEffect();
+				frameEffectPlayed = Time.frameCount;
+			}
+
+			return !disabled;
+		}
 
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
 		{
@@ -146,8 +162,9 @@ namespace SmartVacpack
 
 			// insert right after assigning all the flags
 			return cins.ciInsert(ci => ci.isOp(OpCodes.Stloc_2),
-				CIHelper.emitCall<Func<bool>>(isDisabled),
-				OpCodes.Brfalse, label,
+				OpCodes.Ldarg_0,
+				CIHelper.emitCall<Func<WeaponVacuum, bool>>(updateAnims),
+				OpCodes.Brtrue, label,
 				OpCodes.Ldloc_0, OpCodes.Stloc_1,	// flag2 = flag;
 				OpCodes.Ldc_I4_0, OpCodes.Stloc_2,	// flag3 = false;
 				CIHelper.emitLabel(label));
