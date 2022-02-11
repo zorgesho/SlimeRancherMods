@@ -5,13 +5,15 @@ namespace SmartVacpack
 {
 	class Main: Mod, IModEntryPoint
 	{
-		public virtual void Load() {}
-		public virtual void PostLoad() {}
-
 		public virtual void PreLoad()
 		{
 			init();
-			HarmonyPatcher.GetInstance().PatchAll();
+			CommonPatches.init();
 		}
+
+		// patching here for correct patch order
+		public virtual void Load() => HarmonyPatcher.GetInstance().PatchAll();
+
+		public virtual void PostLoad() {}
 	}
 }

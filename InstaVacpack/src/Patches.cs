@@ -1,12 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Collections.Generic;
-
-using HarmonyLib;
+﻿using HarmonyLib;
 using UnityEngine;
-
-using Common.Harmony;
 
 #if DEBUG
 using Common;
@@ -15,87 +8,70 @@ using Common.UnityDebug;
 
 namespace InstaVacpack
 {
-	// when we trying to pull out an item from a storage
-	[HarmonyPatch(typeof(SiloCatcher), "OnTriggerStay")]
-	static class SiloCatcher_OnTriggerStay_Patch
+	static class CommonPatches
 	{
-		static bool processInstantMode(SiloCatcher siloCatcher)
+		public static void init()
+		{
+			Common.Vacpack.Patches.setModeHandlers(handleShootMode, handleVacMode);
+			Common.Vacpack.Patches.setAnimHandlers(AnimHandler.handleAnims);
+		}
+
+		static class AnimHandler
+		{
+			static bool disableAnims = false;
+			public static void disableForFrame() => disableAnims = true;
+
+			public static bool handleAnims(WeaponVacuum _) => !disableAnims || (disableAnims = false);
+		}
+
+		static bool handleShootMode(WeaponVacuum vac)
+		{
+			if (vac.vacMode != WeaponVacuum.VacMode.SHOOT || !Input.GetKey(Config.instantModeKey))
+				return true;
+
+			bool result = false;
+
+			if (Utils.tryGetPointedObject(vac) is GameObject go)
+			{
+				var source = new PlayerAmmoContainer();
+				var target = Utils.tryGetContainer(go, source.id);
+
+				result = Utils.tryTransferMaxAmount(source, target);
+				Utils.FX.playFX(result, go);
+			}
+
+			if (!result)
+			{
+				Utils.FX.playFX(false);
+				AnimHandler.disableForFrame();
+			}
+
+			return false;
+		}
+
+		static bool handleVacMode(WeaponVacuum vac)
 		{
 			if (!Input.GetKey(Config.instantModeKey))
-				return false;
+				return true;
 
-			var source = Utils.tryGetContainer(siloCatcher);
-			var target = new PlayerAmmoContainer(source.id);
+			bool result = false;
 
-			bool result = Utils.tryTransferMaxAmount(source, target);
-			Utils.FX.playFX(result);
+			if (Utils.tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is SiloCatcher silo)
+			{
+				var source = Utils.tryGetContainer(silo);
+				var target = new PlayerAmmoContainer(source.id);
 
-			return true;
-		}
+				result = Utils.tryTransferMaxAmount(source, target);
+				Utils.FX.playFX(result);
+			}
 
-		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
-		{
-			var list = cins.ToList();
-			int i = list.ciFindIndexForLast(ci => ci.isLDC(45f), ci => ci.isOp(OpCodes.Ret));
+			if (!result)
+			{
+				Utils.FX.playFX(false);
+				AnimHandler.disableForFrame();
+			}
 
-			if (i == -1)
-				return cins;
-
-			// insert 'processInstantMode' right before call to 'Remove'
-			// if instant mode is enabled we will ignore the rest of the method (no matter the result of the transfer)
-			var label = ilg.DefineLabel();
-
-			return list.ciInsert(i + 1,
-				OpCodes.Ldarg_0,
-				CIHelper.emitCall<Func<SiloCatcher, bool>>(processInstantMode),
-				OpCodes.Brfalse, label,
-				OpCodes.Ret,
-				new CodeInstruction(OpCodes.Nop) { labels = { label } });
-		}
-	}
-
-	// when we trying to shoot an item to a storage
-	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
-	static class WeaponVacuum_Update_Patch
-	{
-		static bool processInstantMode(WeaponVacuum vacpack)
-		{
-			if (!Input.GetKey(Config.instantModeKey))
-				return false;
-
-			if (tryGetPointedObject(vacpack) is not GameObject go)
-				return false;
-
-			var source = new PlayerAmmoContainer();
-			var target = Utils.tryGetContainer(go, source.id);
-
-			bool result = Utils.tryTransferMaxAmount(source, target);
-			Utils.FX.playFX(result, go);
-
-			return true;
-		}
-
-		static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = Mathf.Infinity)
-		{
-			var tr = vacpack.vacOrigin.transform;
-			Physics.Raycast(new Ray(tr.position, tr.up), out RaycastHit hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
-
-			return hit.collider?.gameObject;
-		}
-
-		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins)
-		{
-			var list = cins.ToList();
-			int i = list.ciFindIndexForLast(ci => ci.isOp(OpCodes.Ldc_I4_1));
-
-			if (i == -1)
-				return cins;
-
-			// insert 'processInstantMode' right before call to 'Expel'
-			return list.ciInsert(i + 2,
-				OpCodes.Ldarg_0,
-				CIHelper.emitCall<Func<WeaponVacuum, bool>>(processInstantMode),
-				OpCodes.Brtrue, list[i + 1].operand);
+			return false;
 		}
 	}
 

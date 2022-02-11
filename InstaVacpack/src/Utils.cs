@@ -9,6 +9,16 @@ namespace InstaVacpack
 {
 	static class Utils
 	{
+		public static int frameVacModeChanged => FX.VacModeWatcher.lastFrameChanged;
+
+		public static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = 10f)
+		{
+			var tr = vacpack.vacOrigin.transform;
+			Physics.Raycast(new Ray(tr.position, tr.up), out RaycastHit hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
+
+			return hit.collider?.gameObject;
+		}
+
 		public static bool runMultiple(Func<bool> action, int count)
 		{
 			bool result = true;
@@ -100,7 +110,7 @@ namespace InstaVacpack
 			}
 
 			[HarmonyPatch(typeof(WeaponVacuum), "UpdateVacModeForInputs")]
-			static class VacModeWatcher
+			public static class VacModeWatcher
 			{
 				public static int lastFrameChanged { get; private set; }
 
