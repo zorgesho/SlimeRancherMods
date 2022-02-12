@@ -12,13 +12,5 @@ namespace InstaVacpack
 	static class Config
 	{
 		public static KeyCode instantModeKey = KeyCode.LeftControl;
-
-#if DEBUG
-		public static class Dbg
-		{
-			public static readonly bool playerCheats = true;
-			public static readonly bool showColliders = false;
-		}
-#endif
 	}
 }
