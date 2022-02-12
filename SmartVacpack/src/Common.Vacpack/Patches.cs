@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 
 using HarmonyLib;
+using UnityEngine;
 
 using Common.Harmony;
 
@@ -113,6 +114,22 @@ namespace Common.Vacpack
 					OpCodes.Ldloc_0, OpCodes.Stloc_1,	// flag2 = flag;
 					OpCodes.Ldc_I4_0, OpCodes.Stloc_2,	// flag3 = false;
 					CIHelper.emitLabel(label));
+			}
+		}
+
+		// prevents multiple fail effects on the same frame
+		[HarmonyPatch(typeof(WeaponVacuum), "CaptureFailedEffect")]
+		static class WeaponVacuum_CaptureFailedEffect_Patch
+		{
+			static int frameEffectPlayed;
+
+			static bool Prefix()
+			{
+				if (frameEffectPlayed == Time.frameCount)
+					return false;
+
+				frameEffectPlayed = Time.frameCount;																	$"WeaponVacuum.CaptureFailedEffect: played on frame {frameEffectPlayed}".logDbg();
+				return true;
 			}
 		}
 	}

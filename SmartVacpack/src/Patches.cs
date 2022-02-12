@@ -36,7 +36,7 @@ namespace SmartVacpack
 				bool disabled = disableAnims && !FlyingItems.isAnyItem();
 				disableAnims = false;
 
-				if (disabled && Utils.frameVacModeChanged == Time.frameCount && frameEffectPlayed < Time.frameCount - effectGapFrames)
+				if (disabled && Common.Vacpack.Utils.frameVacModeChanged == Time.frameCount && frameEffectPlayed < Time.frameCount - effectGapFrames)
 				{
 					vac.CaptureFailedEffect();
 					frameEffectPlayed = Time.frameCount;
@@ -57,7 +57,7 @@ namespace SmartVacpack
 			if (id == Identifiable.Id.NONE)
 				return false;
 
-			if (Utils.tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is not SiloCatcher silo)
+			if (Common.Vacpack.Utils.tryGetPointedObject<SiloCatcher>(vac) is not SiloCatcher silo)
 				return true;
 
 			if (!silo.hasSiloStorage())
@@ -83,7 +83,7 @@ namespace SmartVacpack
 
 		static bool handleVacMode(WeaponVacuum vac)
 		{
-			if (Utils.tryGetPointedObject(vac)?.GetComponent<SiloCatcher>() is SiloCatcher silo)
+			if (Common.Vacpack.Utils.tryGetPointedObject<SiloCatcher>(vac) is SiloCatcher silo)
 				return handleVacMode(vac, silo);
 
 			return true;
@@ -97,10 +97,9 @@ namespace SmartVacpack
 
 			var playerAmmo = vac.player.Ammo;
 			var id = silo.storageSilo.GetRelevantAmmo().GetSlotName(silo.slotIdx);
-			bool isSlotAvailable = playerAmmo.CouldAddToSlot(id);
 
 			if (!Config.sameMultipleSlots)
-				return isSlotAvailable && playerAmmo.GetCount(id) < vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
+				return playerAmmo.CouldAddToSlot(id) && playerAmmo.GetCount(id) < vac.player.model.maxAmmo - FlyingItems.vacItemsCount;
 
 			return Enumerable.Range(0, playerAmmo.GetUsableSlotCount()).Any(i => playerAmmo.couldAddToSlot(id, i, FlyingItems.vacItemsCount + 1));
 		}

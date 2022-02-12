@@ -33,6 +33,9 @@
     <Compile Include="..\SmartVacpack\src\Common.Vacpack\Patches.cs">
       <Link>src\Common.Vacpack\Patches.cs</Link>
     </Compile>
+    <Compile Include="..\SmartVacpack\src\Common.Vacpack\Utils.cs">
+      <Link>src\Common.Vacpack\Utils.cs</Link>
+    </Compile>
     <Compile Include="config.cs" />
     <Compile Include="main.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

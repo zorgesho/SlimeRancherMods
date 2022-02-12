@@ -1,25 +1,12 @@
 ﻿using System;
 using System.Linq;
 
-using HarmonyLib;
-using UnityEngine;
-
 using Common;
 
 namespace SmartVacpack
 {
 	static class Utils
 	{
-		public static int frameVacModeChanged => VacModeWatcher.lastFrameChanged;
-
-		public static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = 10f)
-		{
-			var tr = vacpack.vacOrigin.transform;
-			Physics.Raycast(new Ray(tr.position, tr.up), out RaycastHit hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
-
-			return hit.collider?.gameObject;
-		}
-
 		public static bool couldAddToSlot(this Ammo ammo, Identifiable.Id id, int slotIdx, int count = 1)
 		{
 			if (!ammo.CouldAddToSlot(id, slotIdx, false))
@@ -104,23 +91,6 @@ namespace SmartVacpack
 				return _getAmmoIdx(Identifiable.Id.NONE);
 
 			return -1;
-		}
-
-		[HarmonyPatch(typeof(WeaponVacuum), "UpdateVacModeForInputs")]
-		static class VacModeWatcher
-		{
-			public static int lastFrameChanged { get; private set; }
-
-			static WeaponVacuum.VacMode prevVacMode;
-
-			static void Postfix(WeaponVacuum __instance)
-			{
-				if (__instance.vacMode == prevVacMode)
-					return;
-
-				prevVacMode = __instance.vacMode;
-				lastFrameChanged = Time.frameCount;																	$"VacModeWatcher: vac mode {prevVacMode}, frame: {lastFrameChanged}".logDbg();
-			}
 		}
 	}
 }
