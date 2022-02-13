@@ -76,11 +76,20 @@ namespace InstaVacpack
 					return;
 
 				if (!success)
+				{
 					vac.CaptureFailedEffect();
+				}
 				else if (go)
+				{
 					playSuccessFX(go);
+					vac.ShootEffect();
+				}
 				else
+				{
+					vac.vacAudio.Cue = vac.vacStartCue;
+					vac.vacAudio.Play();
 					vac.CaptureEffect();
+				}
 
 				lastFramePlayedFX = Time.frameCount;
 			}
