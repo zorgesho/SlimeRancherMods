@@ -16,6 +16,9 @@
 			if (slotIndex >= ammo.ammoModel.usableSlots) // just in case
 				return;
 
+			if (id != Identifiable.Id.NONE && !ammo.potentialAmmo.Contains(id))
+				return;
+
 			var slotId = ammo.Slots[slotIndex]?.id ?? Identifiable.Id.NONE;
 
 			if (id == Identifiable.Id.NONE) // using selected slot

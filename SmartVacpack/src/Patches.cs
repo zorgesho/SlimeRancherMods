@@ -49,7 +49,7 @@ namespace SmartVacpack
 		// disabling vacpack in case current action is restricted, switching silo slots if necessary
 		static bool handleShootMode(WeaponVacuum vac)
 		{
-			if (vac.vacMode != WeaponVacuum.VacMode.SHOOT)
+			if (vac.held || vac.vacMode != WeaponVacuum.VacMode.SHOOT)
 				return true;
 
 			var id = vac.player.Ammo.GetSelectedId();

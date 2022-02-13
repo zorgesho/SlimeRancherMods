@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 
 namespace InstaVacpack
 {
@@ -43,7 +42,18 @@ namespace InstaVacpack
 			if (!allowSameMultipleSlots && ammo.GetAmmoIdx(id) is int idx)
 				return ammo.GetSlotCount(idx) < ammo.GetSlotMaxCount(idx)? idx: -1;
 
-			return Enumerable.Range(0, ammo.GetUsableSlotCount()).Where(i => ammo.CouldAddToSlot(id, i, false)).DefaultIfEmpty(-1).FirstOrDefault();
+			return getSlot(i => ammo.Slots[i] != null && ammo.CouldAddToSlot(id, i, false))
+				?? getSlot(i => ammo.CouldAddToSlot(id, i, false))
+				?? -1;
+		}
+
+		int? getSlot(Predicate<int> predicate)
+		{
+			for (int i = 0; i < ammo.GetUsableSlotCount(); i++)
+				if (predicate(i))
+					return i;
+
+			return null;
 		}
 	}
 }

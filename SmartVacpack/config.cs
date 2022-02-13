@@ -9,8 +9,8 @@ namespace SmartVacpack
 #endif
 	static class Config
 	{
-		public static readonly bool preferEmptySlots = false;
 		public static readonly bool sameMultipleSlots = true;
 		public static readonly bool returnDroppedToSilo = true;
+		public static readonly bool preferEmptySlots = false;
 	}
 }
