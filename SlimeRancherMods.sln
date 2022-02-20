@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "misc", "misc", "{DBA9622D-3
 		post-build.bat = post-build.bat
 		post-build.props = post-build.props
 		project.props = project.props
+		readme.md = readme.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "prototypes", "prototypes", "{A0E6D5D6-B53A-4145-AFE3-5CCABF70BD9B}"
