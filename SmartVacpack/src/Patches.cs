@@ -1,10 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 
 using HarmonyLib;
 using UnityEngine;
 
+using Common;
 using Common.Harmony;
 
 namespace SmartVacpack
@@ -117,6 +119,14 @@ namespace SmartVacpack
 	{
 		static bool Prepare() => Config.sameMultipleSlots;
 
+		static int lastUsedSlot = -1;
+		public static int getLastUsedSlot() => lastUsedSlot;
+
+		static void setLastUsedSlot(int slot)
+		{																									$"Ammo_MaybeAddToSlot_Patch: last used slot is {slot}".logDbg();
+			lastUsedSlot = slot;
+		}
+
 		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins)
 		{
 			var list = cins.ToList();
@@ -130,7 +140,28 @@ namespace SmartVacpack
 				return cins;
 
 			// adding 'continue' right before 'flag3 = true;'
-			return list.ciInsert(i[2], OpCodes.Br, list[i[1]].operand);
+			list.ciInsert(i[2], OpCodes.Br, list[i[1]].operand);
+
+			// saving used slot for SRML patch
+			list.ciInsert(new CIHelper.MemberMatch("Min"), OpCodes.Ldloc_3, CIHelper.emitCall<Action<int>>(setLastUsedSlot));
+			list.ciInsert(ci => ci.isOp(OpCodes.Newobj), +0, 2, OpCodes.Ldloc_S, 6, CIHelper.emitCall<Action<int>>(setLastUsedSlot));
+
+			return list;
+		}
+	}
+
+	// compatibility patch, fixes the slot that used for saving extended data
+	[HarmonyPatch(typeof(SRML.SR.SaveSystem.Patches.AmmoMaybeAddToSlotPatch), "Postfix")]
+	static class SRML_AmmoMaybeAddToSlotPatch_Postfix_Patch
+	{
+		static bool Prepare() => Config.sameMultipleSlots;
+
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins)
+		{
+			// insert right before 'if (count == -1)' check
+			return cins.ciInsert(ci => ci.isOp(OpCodes.Ldloc_3), +0, 1,
+				CIHelper.emitCall<Func<int>>(Ammo_MaybeAddToSlot_Patch.getLastUsedSlot),
+				OpCodes.Stloc_3);
 		}
 	}
 
