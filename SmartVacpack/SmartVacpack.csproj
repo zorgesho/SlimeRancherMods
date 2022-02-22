@@ -21,6 +21,7 @@
   <ItemGroup>
     <Reference Include="0Harmony" />
     <Reference Include="Assembly-CSharp.pb" />
+    <Reference Include="InControl" />
     <Reference Include="SRML" />
     <Reference Include="System" />
     <Reference Include="System.Core" />

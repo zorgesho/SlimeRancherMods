@@ -110,6 +110,25 @@ namespace SmartVacpack
 		}
 	}
 
+	// allows to switch silo slots manually remotely
+	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
+	static class WeaponVacuum_Update_Patch
+	{
+		static bool Prepare() => Config.allowToSwitchSiloSlotsManually;
+
+		static void Postfix(WeaponVacuum __instance)
+		{
+			if (!SRInput.Actions.interact.WasReleased)
+				return;
+
+			if (Common.Vacpack.Utils.tryGetPointedObject(__instance, false) is not GameObject go)
+				return;
+
+			var slotSwitcher = go.GetComponent<SiloStorageActivator>() ?? go.GetComponent<SiloCatcher>()?.getActivator();
+			slotSwitcher?.Activate();
+		}
+	}
+
 	// allows to use multiple slots for the same type of items
 	[HarmonyPatch(typeof(Ammo), "MaybeAddToSlot")]
 	static class Ammo_MaybeAddToSlot_Patch

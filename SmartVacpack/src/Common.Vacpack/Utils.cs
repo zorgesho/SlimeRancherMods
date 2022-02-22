@@ -7,17 +7,22 @@ namespace Common.Vacpack
 	{
 		public static int frameVacModeChanged => VacModeWatcher.lastFrameChanged;
 
-		public static GameObject tryGetPointedObject(WeaponVacuum vacpack, float distance = 10f)
+		public static GameObject tryGetPointedObject(WeaponVacuum vacpack, bool interactableLayerOnly = true, float distance = 10f)
 		{
 			var tr = vacpack.vacOrigin.transform;
-			Physics.Raycast(new Ray(tr.position, tr.up), out var hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
+			Ray ray = new (tr.position, tr.up);
+
+			bool result = Physics.Raycast(ray, out var hit, distance, 1 << vp_Layer.Interactable, QueryTriggerInteraction.Collide);
+
+			if (!result && !interactableLayerOnly)
+				Physics.Raycast(ray, out hit, distance);
 
 			return hit.collider?.gameObject;
 		}
 
-		public static T tryGetPointedObject<T>(WeaponVacuum vacpack, float distance = 10f) where T: Component
+		public static T tryGetPointedObject<T>(WeaponVacuum vacpack, bool interactableLayerOnly = true, float distance = 10f) where T: Component
 		{
-			return tryGetPointedObject(vacpack, distance)?.GetComponent<T>();
+			return tryGetPointedObject(vacpack, interactableLayerOnly, distance)?.GetComponent<T>();
 		}
 
 
