@@ -110,6 +110,49 @@ namespace SmartVacpack
 		}
 	}
 
+	// show additional info about selected item in vacpack (market price and amount in refinery)
+	[HarmonyPatch(typeof(TargetingUI), "Update")]
+	static class TargetingUI_Update_Patch
+	{
+		static bool Prepare() => Config.showAdditionalInfo;
+
+		static void Postfix(TargetingUI __instance)
+		{
+			if (!__instance.player.Targeting)
+				return;
+
+			var selectedAmmo = __instance.player.Ammo.GetSelectedId();
+
+			if (selectedAmmo == Identifiable.Id.NONE)
+				return;
+
+			// can't use 'player.Targeting', need to use interactable layer
+			if (Common.Vacpack.Utils.tryGetPointedObject() is not GameObject go)
+				return;
+
+			if (go.TryGetComponent<ScorePlort>(out var scorePlort))
+			{
+				if (scorePlort.GetMarketValue(selectedAmmo, false) is int price)
+					_showInfo($"Price: {price}");
+			}
+			else if (go.GetComponent<SiloCatcher>()?.type == SiloCatcher.Type.REFINERY)
+			{
+				if (!GadgetDirector.IsRefineryResource(selectedAmmo))
+					return;
+
+				int amount = SRSingleton<SceneContext>.Instance.GadgetDirector.GetRefineryCount(selectedAmmo);
+				_showInfo($"Amount: {amount}");
+			}
+
+			void _showInfo(string info)
+			{
+				__instance.nameText.enabled = __instance.infoText.enabled = true;
+				__instance.nameText.text = Identifiable.GetName(selectedAmmo);
+				__instance.infoText.text = info;
+			}
+		}
+	}
+
 	// allows to switch silo slots manually remotely
 	[HarmonyPatch(typeof(WeaponVacuum), "Update")]
 	static class WeaponVacuum_Update_Patch

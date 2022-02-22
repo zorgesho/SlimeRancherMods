@@ -11,6 +11,7 @@ namespace SmartVacpack
 	{
 		public static readonly bool sameMultipleSlots = true;
 		public static readonly bool returnDroppedToSilo = true;
+		public static readonly bool showAdditionalInfo = true;
 		public static readonly bool allowToSwitchSiloSlotsManually = true;
 		public static readonly bool preferEmptySlots = false;
 	}
