@@ -232,4 +232,43 @@ namespace SmartVacpack
 		static bool Prefix(SiloCatcher __instance, ref bool __result) =>
 			__result = CommonPatches.handleVacMode(__instance.vac, __instance);
 	}
+
+	// highlighting for selected slot
+	static class SlotHighlightPatches
+	{
+		static Color highlightColor =
+			ColorUtility.TryParseHtmlString(Config.highlightColor, out var color)? color: Color.white;
+
+		[HarmonyPatch(typeof(AmmoSlotUI), "Start")]
+		static class AmmoSlotUI_Start_Patch
+		{
+			static bool Prepare() => Config.highlightSelectedSlot;
+
+			static void Postfix(AmmoSlotUI __instance) =>
+				__instance.selected.GetComponent<UnityEngine.UI.Image>().color = highlightColor;
+		}
+
+		[HarmonyPatch(typeof(AmmoSlotUI), "Update")]
+		static class AmmoSlotUI_Update_Patch
+		{
+			static bool Prepare() => Config.highlightSelectedSlot;
+
+			static void changeSelectedSlotColor(AmmoSlotUI slotUI, int selectedSlot)
+			{																									$"AmmoSlotUI_Update_Patch: selected slot changed (previous: {slotUI.lastSelectedAmmoIndex}, currrent: {selectedSlot})".logDbg();
+				if (slotUI.lastSelectedAmmoIndex != -1)
+					slotUI.slots[slotUI.lastSelectedAmmoIndex].front.color = Color.white;
+
+				slotUI.slots[selectedSlot].front.color = highlightColor;
+			}
+
+			static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins)
+			{
+				// insert call to 'changeSelectedSlotColor' inside block 'if (selectedAmmoIdx == i)'
+				return cins.ciInsert(new CIHelper.MemberMatch("SetParent"),
+					OpCodes.Ldarg_0,
+					OpCodes.Ldloc_1,
+					CIHelper.emitCall<Action<AmmoSlotUI, int>>(changeSelectedSlotColor));
+			}
+		}
+	}
 }

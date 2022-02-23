@@ -14,5 +14,8 @@ namespace SmartVacpack
 		public static readonly bool showAdditionalInfo = true;
 		public static readonly bool allowToSwitchSiloSlotsManually = true;
 		public static readonly bool preferEmptySlots = false;
+
+		public static readonly bool highlightSelectedSlot = true;
+		public static readonly string highlightColor = "#FFFF00";
 	}
 }
