@@ -22,7 +22,7 @@
     <Reference Include="0Harmony" />
     <Reference Include="Assembly-CSharp.pb" />
     <Reference Include="InControl" />
-    <Reference Include="SRML" />
+    <Reference Include="SRML.pb" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="Unity.TextMeshPro" />
