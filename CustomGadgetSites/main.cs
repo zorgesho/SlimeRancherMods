@@ -1,4 +1,6 @@
 ﻿using SRML;
+using SRML.Console;
+
 using Common;
 
 namespace CustomGadgetSites
@@ -9,6 +11,9 @@ namespace CustomGadgetSites
 		{
 			init();
 			HarmonyPatcher.GetInstance().PatchAll();
+
+			SaveLoadUtils.init();
+			Console.RegisterCommand(new CreateGadgetSiteCommand());
 		}
 
 		public virtual void Load() {}
