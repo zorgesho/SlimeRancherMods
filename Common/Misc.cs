@@ -1,11 +1,26 @@
 ﻿using System;
 using System.IO;
+using System.Collections.Generic;
 
 // fix for C# 9.0 (pre-5.0 .NET) for init-only properties
 namespace System.Runtime.CompilerServices { static class IsExternalInit {} }
 
 namespace Common
 {
+	static class MiscExtensions
+	{
+		public static void forEach<T>(this IEnumerable<T> sequence, Action<T> action)
+		{
+			if (sequence == null)
+				return;
+
+			var enumerator = sequence.GetEnumerator();
+
+			while (enumerator.MoveNext())
+				action(enumerator.Current);
+		}
+	}
+
 	static partial class StringExtensions
 	{
 		public static bool isNullOrEmpty(this string s) => string.IsNullOrEmpty(s);

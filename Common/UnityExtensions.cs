@@ -11,6 +11,20 @@ namespace Common
 		public static GameObject getParent(this GameObject go) => go.transform.parent?.gameObject;
 		public static GameObject getChild(this GameObject go, string name) => go.transform.Find(name)?.gameObject;
 
+		public static string getFullName(this GameObject go)
+		{
+			var tr = go.transform;
+			var name = tr.name;
+
+			while (tr.parent)
+			{
+				tr = tr.parent;
+				name = $"{tr.name}/{name}";
+			}
+
+			return name;
+		}
+
 		public static void setTransform(this GameObject go, Vector3? pos = null, Vector3? localPos = null, Vector3? localAngles = null, Vector3? localScale = null)
 		{
 			var tr = go.transform;

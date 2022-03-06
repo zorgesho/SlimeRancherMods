@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -25,6 +24,7 @@ namespace CustomGadgetSites
 		}
 
 		static int maxID;
+		static bool _loadedSitesProcessed; // just in case
 
 		static readonly Dictionary<string, CustomGadgetSite> _sites = new();
 		public static IEnumerable<CustomGadgetSite> sites => _sites.Values;
@@ -37,7 +37,7 @@ namespace CustomGadgetSites
 		{																																			$"GadgetSiteManager.createSite: {site.id} {site.position}".logDbg();
 			string id = claimID(site);
 			var cellRoot = RegionUtils.GetRegionsFromPosition(site.position)[0].cellDir.transform;
-			var parent = cellRoot.Find("Sector/Build Sites") ?? cellRoot;																			$"GadgetSiteManager.createSite: parent is '{parent.name}'".logDbg(); // TODO fullname
+			var parent = cellRoot.Find("Sector/Build Sites") ?? cellRoot;																			$"GadgetSiteManager.createSite: parent is '{parent.gameObject.getFullName()}'".logDbg();
 			IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, parent);
 
 			if (register)
@@ -47,6 +47,7 @@ namespace CustomGadgetSites
 		public static void loadSites(IEnumerable<CustomGadgetSite> sites)
 		{
 			_sites.Clear();
+			_loadedSitesProcessed = false;
 
 			foreach (var site in sites)
 			{
@@ -60,9 +61,12 @@ namespace CustomGadgetSites
 			}																																		$"GadgetSiteManager.loadSites: {_sites.Count} loaded".logDbg();
 		}
 
-		public static void createLoadedSites() // TODO check for multiple creation ?
+		public static void createLoadedSites()
 		{																																			"GadgetSiteManager.createSites".logDbg();
-			sites.ToList().ForEach(s => createSite(s)); // TODO
+			Common.Debug.assert(!_loadedSitesProcessed);
+			sites.forEach(s => createSite(s));
+
+			_loadedSitesProcessed = true;
 		}
 	}
 }
