@@ -63,7 +63,7 @@ namespace Common
 
 			static void dump(GameObject go, string indent)
 			{
-				output.AppendLine($"{indent}gameobject: {go.name} activeS/activeH:{go.activeSelf}/{go.activeInHierarchy}");
+				output.AppendLine($"{indent}gameobject: {go.name} activeS/activeH:{go.activeSelf}/{go.activeInHierarchy}, layer:{go.layer}");
 
 				foreach (var cmp in go.GetComponents<Component>())
 					dump(cmp, indent + indentStep, "component");

@@ -1,7 +1,9 @@
 ﻿using SRML;
-using SRML.Console;
-
 using Common;
+
+#if DEBUG
+using SRML.Console;
+#endif
 
 namespace CustomGadgetSites
 {
@@ -13,7 +15,9 @@ namespace CustomGadgetSites
 			HarmonyPatcher.GetInstance().PatchAll();
 
 			SaveLoadUtils.init();
+#if DEBUG
 			Console.RegisterCommand(new CreateGadgetSiteCommand());
+#endif
 		}
 
 		public virtual void Load() {}
