@@ -31,17 +31,31 @@ namespace CustomGadgetSites
 
 		static string claimID(CustomGadgetSite site) => ModdedStringRegistry.ClaimID("site", site.id);
 
-		public static void createSite(Vector3 position) => createSite(new ($"{maxID++}", position), true);
+		public static bool createSite(Vector3 position) => createSite(new ($"{maxID++}", position), true);
 
-		static void createSite(CustomGadgetSite site, bool register = false)
+		static Transform findSitesParent(Vector3 position)
+		{
+			var regions = RegionUtils.GetRegionsFromPosition(position);
+
+			if (regions.Count == 0)
+				return null;
+
+			var sectorRoot = regions[0].cellDir.transform.Find("Sector");
+			return sectorRoot?.Find("Build Sites") ?? sectorRoot;
+		}
+
+		static bool createSite(CustomGadgetSite site, bool register = false)
 		{																																			$"GadgetSiteManager.createSite: {site.id} {site.position}".logDbg();
-			string id = claimID(site);
-			var cellRoot = RegionUtils.GetRegionsFromPosition(site.position)[0].cellDir.transform;
-			var parent = cellRoot.Find("Sector/Build Sites") ?? cellRoot;																			$"GadgetSiteManager.createSite: parent is '{parent.gameObject.getFullName()}'".logDbg();
-			IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, parent);
+			if (findSitesParent(site.position) is not Transform sitesParent)
+				return false;
+
+			string id = claimID(site);																												$"GadgetSiteManager.createSite: parent is '{sitesParent.gameObject.getFullName()}', id is: {id}".logDbg();
+			IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, sitesParent);
 
 			if (register)
 				_sites[id] = site;
+
+			return true;
 		}
 
 		public static void loadSites(IEnumerable<CustomGadgetSite> sites)

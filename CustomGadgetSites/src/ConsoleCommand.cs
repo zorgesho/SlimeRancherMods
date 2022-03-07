@@ -17,8 +17,7 @@ namespace CustomGadgetSites
 			if (!Physics.Raycast(tr.position, tr.forward, out var raycastHit))
 				return false;
 
-			GadgetSiteManager.createSite(raycastHit.point);
-			return true;
+			return GadgetSiteManager.createSite(raycastHit.point);
 		}
 	}
 }
