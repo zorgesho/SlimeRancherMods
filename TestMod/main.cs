@@ -1,5 +1,7 @@
-﻿using SRML;
-using UnityEngine;
+﻿using UnityEngine;
+
+using SRML;
+using SRML.Console;
 
 using Common;
 
@@ -11,6 +13,8 @@ namespace TestMod
 		{
 			init();
 			HarmonyPatcher.GetInstance().PatchAll();
+
+			Console.RegisterCommand(new GiveAllGadgetsCommand());
 		}
 
 		public virtual void Load() {}
