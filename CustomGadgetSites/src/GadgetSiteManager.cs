@@ -50,7 +50,10 @@ namespace CustomGadgetSites
 				return false;
 
 			string id = claimID(site);																												$"GadgetSiteManager.createSite: parent is '{sitesParent.gameObject.getFullName()}', id is: {id}".logDbg();
-			IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, sitesParent);
+
+			var newSite = IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, sitesParent).GetComponent<GadgetSite>();
+			newSite.director = sitesParent.GetComponentInParent<IdDirector>();
+			newSite.director.persistenceDict[newSite] = id;
 
 			if (register)
 				_sites[id] = site;
