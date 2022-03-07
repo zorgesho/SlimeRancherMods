@@ -1,5 +1,11 @@
 ﻿using System;
+using System.Linq;
+
+using UnityEngine.SceneManagement;
+
 using SRML.Console;
+
+using Common;
 
 namespace TestMod
 {
@@ -21,6 +27,28 @@ namespace TestMod
 		{
 			foreach (Gadget.Id id in Enum.GetValues(typeof(Gadget.Id)))
 				addGadget(id, 2); // giving 2 items so warp gadgets can be used
+
+			return true;
+		}
+	}
+
+
+	class DumpRootObjectsCommand: ConsoleCommand
+	{
+		public override string ID => "dumprootobjects";
+		public override string Usage => ID;
+		public override string Description => ID;
+
+		public override bool Execute(string[] args)
+		{
+			string name = args.Length > 0? args[0].ToLower(): null;
+
+			Enumerable.Range(0, SceneManager.sceneCount).
+				Select(i => SceneManager.GetSceneAt(i)).
+				Where(s => s.isLoaded).
+				SelectMany(s => s.GetRootGameObjects()).
+				Where(go => name == null || go.name.ToLower().Contains(name)).
+				forEach(go => go.dump());
 
 			return true;
 		}

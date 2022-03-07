@@ -15,6 +15,7 @@ namespace TestMod
 			HarmonyPatcher.GetInstance().PatchAll();
 
 			Console.RegisterCommand(new GiveAllGadgetsCommand());
+			Console.RegisterCommand(new DumpRootObjectsCommand());
 		}
 
 		public virtual void Load() {}
