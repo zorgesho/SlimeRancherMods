@@ -1,6 +1,11 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 
+#if DEBUG
+using MonomiPark.SlimeRancher.DataModel;
+using Common;
+#endif
+
 namespace CustomGadgetSites
 {
 	[HarmonyPatch(typeof(TargetingUI), "Update")]
@@ -41,4 +46,33 @@ namespace CustomGadgetSites
 			}
 		}
 	}
+
+#if DEBUG
+	static class DebugPatches
+	{
+		static readonly bool includeVanillaSites = false;
+
+		static bool shouldLogSite(string siteId) => includeVanillaSites || siteId.Contains(".");
+
+		[HarmonyPatch(typeof(GameModel), "RegisterGadgetSite")]
+		static class GameModel_RegisterGadgetSite_Patch
+		{
+			static void Postfix(string siteId, GameObject gameObject)
+			{
+				if (shouldLogSite(siteId))
+					$"Gadget site registered: {siteId} ({gameObject.name})".logDbg();
+			}
+		}
+
+		[HarmonyPatch(typeof(GameModel), "UnregisterGadgetSite")]
+		static class GameModel_UnregisterGadgetSite_Patch
+		{
+			static void Postfix(string siteId)
+			{
+				if (shouldLogSite(siteId))
+					$"Gadget site unregistered: {siteId}".logDbg();
+			}
+		}
+	}
+#endif // DEBUG
 }

@@ -62,15 +62,18 @@ namespace CustomGadgetSites
 		}
 
 		public static bool removeSite(GadgetSite site)
-		{
+		{																																			$"GadgetSiteManager.removeSite: trying to remove '{site?.id}'".logDbg();
 			if (!site || site.attached)
 				return false;
 
 			if (!_sites.ContainsKey(site.id))
 				return false; // TODO
 
+			// for some reason sites without attached objects are not unregister
+			SRSingleton<SceneContext>.Instance.GameModel.UnregisterGadgetSite(site.id);
+
 			_sites.Remove(site.id);
-			Object.Destroy(site.gameObject);
+			Object.Destroy(site.gameObject);																										"GadgetSiteManager.removeSite: site removed".logDbg();
 			return true;
 		}
 
