@@ -27,19 +27,48 @@ namespace TestMod
 		}
 
 		[HarmonyPatch(typeof(PlayerState), "Update")]
-		static class MoneyCheatPatch
+		static class PlayerState_Update_Patch
 		{
-			const int moneyStep = 10000;
-			const int moneyMax = 1000000;
+			const int money = 1000000;
 
 			static bool Prepare() => Config.Dbg.playerCheats;
 
 			static void Postfix(PlayerState __instance)
 			{
-				if (__instance.model.currency < moneyMax)
-					__instance.AddCurrency(moneyStep);
+				if (__instance.model.currency < money)
+					__instance.AddCurrency(money - __instance.model.currency);
 
 				__instance.SetEnergy(__instance.GetMaxEnergy());
+			}
+		}
+
+		static class JetpackPatches
+		{
+			[HarmonyPatch(typeof(EnergyJetpack), "Awake")]
+			static class EnergyJetpack_Awake_Patch
+			{
+				static bool Prepare() => Config.Dbg.jetpackCheats;
+
+				static void Postfix(EnergyJetpack __instance) =>
+					__instance.jetpackVelThreshold = 10f;
+			}
+
+			[HarmonyPatch(typeof(EnergyJetpack), "OnStart_Jump")]
+			static class EnergyJetpack_OnStartJump_Patch
+			{
+				static bool Prepare() => Config.Dbg.jetpackCheats;
+
+				static void Postfix(EnergyJetpack __instance) =>
+					__instance.canKickInJetpackTime = 0f;
+			}
+
+			[HarmonyPatch(typeof(EnergyJetpack), "OnStart_Jetpack")]
+			static class EnergyJetpack_OnStartJetpack_Patch
+			{
+				static bool Prepare() => Config.Dbg.jetpackCheats;
+
+				static void Postfix(EnergyJetpack __instance) =>
+					__instance.hoverY += 1e5f;
 			}
 		}
 	}
