@@ -34,7 +34,9 @@ namespace CustomGadgetSites
 
 			if (SRInput.Actions.attack.WasPressed)
 			{
-				if (!targetSite)
+				if (targetSite)
+					GadgetSiteManager.removeSite(targetSite);
+				else
 					GadgetSiteManager.createSite(position);
 			}
 		}

@@ -61,6 +61,19 @@ namespace CustomGadgetSites
 			return true;
 		}
 
+		public static bool removeSite(GadgetSite site)
+		{
+			if (!site || site.attached)
+				return false;
+
+			if (!_sites.ContainsKey(site.id))
+				return false; // TODO
+
+			_sites.Remove(site.id);
+			Object.Destroy(site.gameObject);
+			return true;
+		}
+
 		public static void loadSites(IEnumerable<CustomGadgetSite> sites)
 		{
 			_sites.Clear();
