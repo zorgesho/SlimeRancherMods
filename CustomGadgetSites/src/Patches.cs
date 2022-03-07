@@ -1,9 +1,10 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 
+using Common;
+
 #if DEBUG
 using MonomiPark.SlimeRancher.DataModel;
-using Common;
 #endif
 
 namespace CustomGadgetSites
@@ -15,13 +16,29 @@ namespace CustomGadgetSites
 
 		static WeaponVacuum vacpack;
 
-		static GameObject getPointedObject(out Vector3 position)
+		static bool getTargetPoint(out Vector3 position, out GadgetSite site)
 		{
 			var tr = vacpack.vacOrigin.transform;
-			Physics.Raycast(tr.position, tr.up, out var hit, raycastDistance);
+			Ray ray = new (tr.position - tr.up * 2f, tr.up);
+
+			bool point = Physics.Raycast(ray, out var hit, raycastDistance, 1);
 			position = hit.point;
 
-			return hit.collider?.gameObject;
+			Physics.Raycast(ray, out hit, raycastDistance, 1 << vp_Layer.RaycastOnly);
+			site = hit.collider?.gameObject?.getParent()?.GetComponent<GadgetSite>();
+
+			return point || site;
+		}
+
+		static void processLeftClick(Vector3 position, GadgetSite site)
+		{
+			if (!SRInput.Actions.attack.WasPressed || position == default)
+				return;
+
+			if (site)
+				GadgetSiteManager.removeSite(site);
+			else
+				GadgetSiteManager.createSite(position);
 		}
 
 		static void Postfix()
@@ -32,18 +49,10 @@ namespace CustomGadgetSites
 			if (vacpack.vacMode != WeaponVacuum.VacMode.GADGET)
 				return;
 
-			if (getPointedObject(out var position) is not GameObject target)
+			if (!getTargetPoint(out var position, out var targetSite))
 				return;
 
-			var targetSite = target.GetComponentInParent<GadgetSite>();
-
-			if (SRInput.Actions.attack.WasPressed)
-			{
-				if (targetSite)
-					GadgetSiteManager.removeSite(targetSite);
-				else
-					GadgetSiteManager.createSite(position);
-			}
+			processLeftClick(position, targetSite);
 		}
 	}
 
