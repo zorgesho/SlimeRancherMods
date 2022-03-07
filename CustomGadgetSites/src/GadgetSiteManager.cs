@@ -61,6 +61,20 @@ namespace CustomGadgetSites
 			return true;
 		}
 
+		public static bool moveSite(GadgetSite site, Vector3 position)
+		{
+			if (!site || site.attached)
+				return false;
+
+			if (!_sites.ContainsKey(site.id))
+				return false; // TODO
+
+			site.transform.position = position;
+			_sites[site.id].position = position;
+
+			return true;
+		}
+
 		public static bool removeSite(GadgetSite site)
 		{																																			$"GadgetSiteManager.removeSite: trying to remove '{site?.id}'".logDbg();
 			if (!site || site.attached)

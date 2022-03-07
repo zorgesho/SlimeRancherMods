@@ -15,6 +15,7 @@ namespace CustomGadgetSites
 		const float raycastDistance = 10f;
 
 		static WeaponVacuum vacpack;
+		static GadgetSite movingSite;
 
 		static bool getTargetPoint(out Vector3 position, out GadgetSite site)
 		{
@@ -41,6 +42,17 @@ namespace CustomGadgetSites
 				GadgetSiteManager.createSite(position);
 		}
 
+		static void processRightClick(Vector3 position, GadgetSite site)
+		{
+			if (SRInput.Actions.vac.WasPressed && !site?.attached)
+				movingSite = site;
+			else if (!SRInput.Actions.vac.IsPressed)
+				movingSite = null;
+
+			if (movingSite && position != default)
+				GadgetSiteManager.moveSite(movingSite, position);
+		}
+
 		static void Postfix()
 		{
 			if (!vacpack)
@@ -53,6 +65,7 @@ namespace CustomGadgetSites
 				return;
 
 			processLeftClick(position, targetSite);
+			processRightClick(position, targetSite);
 		}
 	}
 
