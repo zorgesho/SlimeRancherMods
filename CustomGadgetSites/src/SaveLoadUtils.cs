@@ -44,11 +44,9 @@ namespace CustomGadgetSites
 		[HarmonyPatch(typeof(ExtendedData), "Push")]
 		static class ExtendedData_Push_Patch
 		{
-			static readonly string modID = nameof(CustomGadgetSites).ToLower();
-
 			static void Prefix()
 			{
-				var modInfo = SRModLoader.Mods[modID];
+				var modInfo = SRModLoader.Mods[Main.id];
 
 				if (!ExtendedData.worldSaveData.ContainsKey(modInfo))
 					ExtendedData.worldSaveData[modInfo] = new CompoundDataPiece("root");

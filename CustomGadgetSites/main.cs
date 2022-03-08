@@ -9,6 +9,8 @@ namespace CustomGadgetSites
 {
 	class Main: Mod, IModEntryPoint
 	{
+		public static new readonly string id = Mod.id.ToLower();
+
 		public virtual void PreLoad()
 		{
 			init();
