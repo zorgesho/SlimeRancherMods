@@ -12,6 +12,16 @@ namespace CustomGadgetSites
 	[HarmonyPatch(typeof(TargetingUI), "Update")]
 	static class TargetingUI_Update_Patch
 	{
+		// doesn't support changes on the fly
+		static class CachedStrings
+		{
+			static string _key(InControl.PlayerAction action) =>
+				XlateKeyText.XlateKey(SRInput.GetButtonKey(action, SRInput.ButtonType.PRIMARY));
+
+			public static readonly string createSite = $"Press {_key(SRInput.Actions.attack)} to create";
+			public static readonly string moveRemoveSite = $"Press {_key(SRInput.Actions.attack)} to remove\nHold {_key(SRInput.Actions.vac)} to move";
+		}
+
 		const float raycastDistance = 10f;
 
 		static WeaponVacuum vacpack;
@@ -29,6 +39,36 @@ namespace CustomGadgetSites
 			site = hit.collider?.gameObject?.getParent()?.GetComponent<GadgetSite>();
 
 			return point || site;
+		}
+
+		static void showInfo(TargetingUI ui, GadgetSite site)
+		{
+			void _showInfo(string title, string info = null)
+			{
+				ui.nameText.enabled = true;
+				ui.nameText.text = title;
+#if DEBUG
+				if (site)
+					info = $"{info}\n<size=16>{site.gameObject.getFullName()}</size>";
+#endif
+				if (info != null)
+				{
+					ui.infoText.enabled = true;
+					ui.infoText.text = info;
+				}
+			}
+
+			if (site?.attached == true)
+				return;
+
+			if (site == null)
+				_showInfo("Custom gadget site", CachedStrings.createSite);
+			else if (site.id.Contains(Main.id))
+				_showInfo("Custom gadget site", CachedStrings.moveRemoveSite);
+			else if (site.id.Contains("."))
+				_showInfo("Gadget site");
+			else
+				_showInfo("Vanilla gadget site");
 		}
 
 		static void processLeftClick(Vector3 position, GadgetSite site)
@@ -53,7 +93,7 @@ namespace CustomGadgetSites
 				GadgetSiteManager.moveSite(movingSite, position);
 		}
 
-		static void Postfix()
+		static void Postfix(TargetingUI __instance)
 		{
 			if (!vacpack)
 				vacpack = SRSingleton<SceneContext>.Instance.Player.GetComponentInChildren<WeaponVacuum>();
@@ -63,6 +103,9 @@ namespace CustomGadgetSites
 
 			if (!getTargetPoint(out var position, out var targetSite))
 				return;
+
+			if (Config.showSiteInfo)
+				showInfo(__instance, targetSite);
 
 			processLeftClick(position, targetSite);
 			processRightClick(position, targetSite);

@@ -9,5 +9,6 @@ namespace CustomGadgetSites
 #endif
 	static class Config
 	{
+		public static readonly bool showSiteInfo = true;
 	}
 }
