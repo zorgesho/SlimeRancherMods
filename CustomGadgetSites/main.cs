@@ -1,9 +1,7 @@
 ﻿using SRML;
-using Common;
-
-#if DEBUG
 using SRML.Console;
-#endif
+
+using Common;
 
 namespace CustomGadgetSites
 {
@@ -17,6 +15,8 @@ namespace CustomGadgetSites
 			HarmonyPatcher.GetInstance().PatchAll();
 
 			SaveLoadUtils.init();
+
+			Console.RegisterCommand(new RestoreGadgetSitesCommand());
 #if DEBUG
 			Console.RegisterCommand(new CreateGadgetSiteCommand());
 #endif

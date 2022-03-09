@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 
 using UnityEngine;
 
@@ -41,6 +42,19 @@ namespace CustomGadgetSites
 
 		static readonly Dictionary<string, GadgetSiteInfo> _sites = new();
 		public static IEnumerable<GadgetSiteInfo> sites => _sites.Values;
+
+		public static int restoreExternalSites()
+		{
+			int count = 0;
+
+			foreach (var site in _sites.Where(site => site.Value.isExternal).ToList())
+			{
+				_sites.Remove(site.Key);																											$"GadgetSiteManager: site '{site.Value.id}' restored".logDbg();
+				count++;
+			}
+
+			return count;
+		}
 
 		static string claimID(GadgetSiteInfo site) => ModdedStringRegistry.ClaimID("site", site.id);
 
