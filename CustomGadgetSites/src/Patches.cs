@@ -79,7 +79,7 @@ namespace CustomGadgetSites
 
 		static void processLeftClick(Vector3 position, GadgetSite site)
 		{
-			if (!SRInput.Actions.attack.WasPressed || position == default)
+			if (!SRInput.Actions.attack.WasPressed || (!site && position == default))
 				return;
 
 			if (site)
