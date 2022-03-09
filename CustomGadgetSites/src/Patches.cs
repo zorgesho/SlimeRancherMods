@@ -74,23 +74,39 @@ namespace CustomGadgetSites
 				_showInfo(Strings.site + " (vanilla)");
 		}
 
+		static UITemplates uiTemplates => SRSingleton<GameContext>.Instance.UITemplates;
+		static void play(SECTR_AudioCue cue) => SECTR_AudioSystem.Play(cue, Vector3.zero, false);
+
 		static void processLeftClick(Vector3 position, GadgetSite site)
 		{
 			if (!SRInput.Actions.attack.WasPressed || position == default)
 				return;
 
 			if (site)
-				GadgetSiteManager.removeSite(site);
+			{
+				if (GadgetSiteManager.removeSite(site))
+					play(uiTemplates.removeGadgetCue);
+			}
 			else
-				GadgetSiteManager.createSite(position);
+			{
+				if (GadgetSiteManager.createSite(position))
+					play(uiTemplates.placeGadgetCue);
+				else
+					play(uiTemplates.errorCue);
+			}
 		}
 
 		static void processRightClick(Vector3 position, GadgetSite site)
 		{
 			if (SRInput.Actions.vac.WasPressed && !site?.attached)
+			{
 				movingSite = site;
+				play(uiTemplates.clickCue);
+			}
 			else if (!SRInput.Actions.vac.IsPressed)
+			{
 				movingSite = null;
+			}
 
 			if (movingSite && position != default)
 				GadgetSiteManager.moveSite(movingSite, position);
