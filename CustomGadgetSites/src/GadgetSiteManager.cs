@@ -13,8 +13,21 @@ namespace CustomGadgetSites
 	{
 		public class GadgetSiteInfo
 		{
-			public readonly string id;
+			public readonly string id; // either number (for sites created by this mod) or full id (for other sites)
 			public Vector3 position;
+
+			public bool isRemoved
+			{
+				set
+				{
+					Common.Debug.assert(value);
+					position = default;
+				}
+
+				get => position == default;
+			}
+
+			public bool isExternal => id.startsWith("site");
 
 			public GadgetSiteInfo(string id, Vector3 position)
 			{
@@ -61,16 +74,25 @@ namespace CustomGadgetSites
 			return true;
 		}
 
+		static GadgetSiteInfo getSiteInfo(GadgetSite site)
+		{
+			if (!_sites.TryGetValue(site.id, out var siteInfo))
+			{
+				siteInfo = new GadgetSiteInfo(site.id, site.transform.position);																	$"GadgetSiteManager.getSiteInfo: external site added ('{site.id}')".logDbg();
+				_sites[site.id] = siteInfo;
+			}
+
+			return siteInfo;
+		}
+
 		public static bool moveSite(GadgetSite site, Vector3 position)
 		{
 			if (!site || site.attached)
 				return false;
 
-			if (!_sites.ContainsKey(site.id))
-				return false; // TODO
-
+			var siteInfo = getSiteInfo(site);
 			site.transform.position = position;
-			_sites[site.id].position = position;
+			siteInfo.position = position;
 
 			return true;
 		}
@@ -80,19 +102,27 @@ namespace CustomGadgetSites
 			if (!site || site.attached)
 				return false;
 
-			if (!_sites.ContainsKey(site.id))
-				return false; // TODO
+			var siteInfo = getSiteInfo(site);
 
-			// for some reason sites without attached objects are not unregister
-			SRSingleton<SceneContext>.Instance.GameModel.UnregisterGadgetSite(site.id);
+			if (siteInfo.isExternal)
+			{
+				siteInfo.isRemoved = true;
+				site.transform.gameObject.SetActive(false);																							"GadgetSiteManager.removeSite: external site deactivated".logDbg();
+			}
+			else
+			{
+				// for some reason sites without attached objects are not unregister
+				SRSingleton<SceneContext>.Instance.GameModel.UnregisterGadgetSite(site.id);
 
-			_sites.Remove(site.id);
-			Object.Destroy(site.gameObject);																										"GadgetSiteManager.removeSite: site removed".logDbg();
+				_sites.Remove(site.id);
+				Object.Destroy(site.gameObject);																									"GadgetSiteManager.removeSite: site removed".logDbg();
+			}
+
 			return true;
 		}
 
 		public static void loadSitesInfo(IEnumerable<GadgetSiteInfo> sites)
-		{
+		{																																			"GadgetSiteManager.loadSitesInfo".logDbg();
 			_sites.Clear();
 			_sitesInfoProcessed = false;
 
@@ -103,17 +133,45 @@ namespace CustomGadgetSites
 				if (site == null)
 					continue;
 
-				_sites[claimID(site)] = site;
-				maxID = int.Parse(site.id) + 1;
+				if (site.isExternal)
+				{
+					_sites[site.id] = site;
+				}
+				else
+				{
+					_sites[claimID(site)] = site;
+					maxID = int.Parse(site.id) + 1;
+				}																																	$"GadgetSiteManager.loadSitesInfo: site loaded (id: '{site.id}', pos: {site.position})".logDbg();
 			}																																		$"GadgetSiteManager.loadSitesInfo: {_sites.Count} loaded".logDbg();
 		}
 
 		public static void processSitesInfo()
 		{																																			"GadgetSiteManager.processSitesInfo".logDbg();
 			Common.Debug.assert(!_sitesInfoProcessed);
-			sites.forEach(s => createSite(s));
 
-			_sitesInfoProcessed = true;
+			var gameModel = SRSingleton<SceneContext>.Instance.GameModel;
+
+			foreach (var site in sites)
+			{
+				_sitesInfoProcessed = true;
+
+				if (!site.isExternal)
+				{
+					createSite(site);
+					continue;
+				}
+
+				if (!gameModel.gadgetSites.TryGetValue(site.id, out var siteModel))
+				{
+					$"Gadget site with id '{site.id}' not found".logError();
+					continue;
+				}
+
+				if (site.isRemoved)
+					siteModel.transform.gameObject.SetActive(false);
+				else
+					siteModel.transform.position = site.position;
+			}
 		}
 	}
 }

@@ -13,11 +13,12 @@ namespace CustomGadgetSites
 	static class TargetingUI_Update_Patch
 	{
 		// doesn't support changes on the fly
-		static class CachedStrings
+		static class Strings
 		{
 			static string _key(InControl.PlayerAction action) =>
 				XlateKeyText.XlateKey(SRInput.GetButtonKey(action, SRInput.ButtonType.PRIMARY));
 
+			public const string site = "Gadget site";
 			public static readonly string createSite = $"Press {_key(SRInput.Actions.attack)} to create";
 			public static readonly string moveRemoveSite = $"Press {_key(SRInput.Actions.attack)} to remove\nHold {_key(SRInput.Actions.vac)} to move";
 		}
@@ -47,6 +48,8 @@ namespace CustomGadgetSites
 			{
 				ui.nameText.enabled = true;
 				ui.nameText.text = title;
+
+				info ??= Strings.moveRemoveSite;
 #if DEBUG
 				if (site)
 					info = $"{info}\n<size=16>{site.gameObject.getFullName()}</size>";
@@ -62,13 +65,13 @@ namespace CustomGadgetSites
 				return;
 
 			if (site == null)
-				_showInfo("Custom gadget site", CachedStrings.createSite);
+				_showInfo(Strings.site, Strings.createSite);
 			else if (site.id.Contains(Main.id))
-				_showInfo("Custom gadget site", CachedStrings.moveRemoveSite);
+				_showInfo(Strings.site + " (custom)");
 			else if (site.id.Contains("."))
-				_showInfo("Gadget site");
+				_showInfo(Strings.site + " (mc)");
 			else
-				_showInfo("Vanilla gadget site");
+				_showInfo(Strings.site + " (vanilla)");
 		}
 
 		static void processLeftClick(Vector3 position, GadgetSite site)
