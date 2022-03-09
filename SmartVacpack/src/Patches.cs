@@ -56,6 +56,9 @@ namespace SmartVacpack
 
 			var id = vac.player.Ammo.GetSelectedId();
 
+			if (id == Identifiable.Id.NONE)
+				return true;
+
 			if (Common.Vacpack.Utils.tryGetPointedObject<SiloCatcher>(vac) is not SiloCatcher silo)
 				return true;
 
