@@ -11,12 +11,12 @@ namespace CustomGadgetSites
 {
 	static class GadgetSiteManager
 	{
-		public class CustomGadgetSite
+		public class GadgetSiteInfo
 		{
 			public readonly string id;
 			public Vector3 position;
 
-			public CustomGadgetSite(string id, Vector3 position)
+			public GadgetSiteInfo(string id, Vector3 position)
 			{
 				this.id = id;
 				this.position = position;
@@ -24,12 +24,12 @@ namespace CustomGadgetSites
 		}
 
 		static int maxID;
-		static bool _loadedSitesProcessed; // just in case
+		static bool _sitesInfoProcessed; // just in case
 
-		static readonly Dictionary<string, CustomGadgetSite> _sites = new();
-		public static IEnumerable<CustomGadgetSite> sites => _sites.Values;
+		static readonly Dictionary<string, GadgetSiteInfo> _sites = new();
+		public static IEnumerable<GadgetSiteInfo> sites => _sites.Values;
 
-		static string claimID(CustomGadgetSite site) => ModdedStringRegistry.ClaimID("site", site.id);
+		static string claimID(GadgetSiteInfo site) => ModdedStringRegistry.ClaimID("site", site.id);
 
 		public static bool createSite(Vector3 position) => createSite(new ($"{maxID++}", position), true);
 
@@ -44,7 +44,7 @@ namespace CustomGadgetSites
 			return sectorRoot?.Find("Build Sites") ?? sectorRoot;
 		}
 
-		static bool createSite(CustomGadgetSite site, bool register = false)
+		static bool createSite(GadgetSiteInfo site, bool register = false)
 		{																																			$"GadgetSiteManager.createSite: {site.id} {site.position}".logDbg();
 			if (findSitesParent(site.position) is not Transform sitesParent)
 				return false;
@@ -91,10 +91,10 @@ namespace CustomGadgetSites
 			return true;
 		}
 
-		public static void loadSites(IEnumerable<CustomGadgetSite> sites)
+		public static void loadSitesInfo(IEnumerable<GadgetSiteInfo> sites)
 		{
 			_sites.Clear();
-			_loadedSitesProcessed = false;
+			_sitesInfoProcessed = false;
 
 			foreach (var site in sites)
 			{
@@ -105,15 +105,15 @@ namespace CustomGadgetSites
 
 				_sites[claimID(site)] = site;
 				maxID = int.Parse(site.id) + 1;
-			}																																		$"GadgetSiteManager.loadSites: {_sites.Count} loaded".logDbg();
+			}																																		$"GadgetSiteManager.loadSitesInfo: {_sites.Count} loaded".logDbg();
 		}
 
-		public static void createLoadedSites()
-		{																																			"GadgetSiteManager.createSites".logDbg();
-			Common.Debug.assert(!_loadedSitesProcessed);
+		public static void processSitesInfo()
+		{																																			"GadgetSiteManager.processSitesInfo".logDbg();
+			Common.Debug.assert(!_sitesInfoProcessed);
 			sites.forEach(s => createSite(s));
 
-			_loadedSitesProcessed = true;
+			_sitesInfoProcessed = true;
 		}
 	}
 }
