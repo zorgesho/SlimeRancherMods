@@ -2,6 +2,6 @@
   "id": "CustomGadgetSites",
   "name": "Custom Gadget Sites",
   "author": "zorgesho",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "load_after": [ "morecommands" ]
 }
