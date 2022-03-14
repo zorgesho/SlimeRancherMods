@@ -212,6 +212,30 @@ namespace SmartVacpack
 		}
 	}
 
+	// fix for multiple slots
+	[HarmonyPatch(typeof(Ammo), "Replace", typeof(Identifiable.Id), typeof(Identifiable.Id))]
+	static class Ammo_Replace_Patch
+	{
+		static bool Prepare() => Config.sameMultipleSlots;
+
+		static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> cins, ILGenerator ilg)
+		{
+			var list = cins.ToList();
+
+			// instead of immediately return true we'll use local boolean var for result
+			var result = ilg.DeclareLocal(typeof(bool));
+			list.ciInsert(0, OpCodes.Ldc_I4_0, OpCodes.Stloc, result);
+
+			if (list.ciFindIndexes(OpCodes.Ret, OpCodes.Ldc_I4_0) is not int[] ii)
+				return cins;
+
+			list.ciReplace(ii[0], OpCodes.Stloc, result); // return true; --> result = true;
+			list.ciReplace(ii[1], OpCodes.Ldloc, result); // return false; --> return result;
+
+			return list;
+		}
+	}
+
 	// compatibility patch, fixes the slot that used for saving extended data
 	[HarmonyPatch(typeof(SRML.SR.SaveSystem.Patches.AmmoMaybeAddToSlotPatch), "Postfix")]
 	static class SRML_AmmoMaybeAddToSlotPatch_Postfix_Patch
