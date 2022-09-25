@@ -34,7 +34,7 @@ namespace CustomGadgetSites
 
 			// we're using publicized SRML assembly (because of the patch below)
 			static void onGameLoad(SceneContext _) => GadgetSiteManager.processSitesInfo();
-			typeof(SRCallbacks).GetEvent("PreSaveGameLoad").GetAddMethod().Invoke(null, new[] { (SRCallbacks.OnSaveGameLoadedDelegate)onGameLoad });
+			typeof(SRCallbacks).GetEvent("PreSaveGameLoaded").GetAddMethod().Invoke(null, new[] { (SRCallbacks.OnSaveGameLoadedDelegate)onGameLoad });
 
 			SaveRegistry.RegisterWorldDataSaveDelegate(data =>
 				data.SetPiece(dataPieceName, GadgetSiteManager.sites.Select(siteToData).ToHashSet()));

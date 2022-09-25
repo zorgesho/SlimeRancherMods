@@ -9,7 +9,7 @@ namespace CustomGadgetSites
 	{
 		public static new readonly string id = Mod.id.ToLower();
 
-		public virtual void PreLoad()
+		public virtual void Load()
 		{
 			init();
 			HarmonyPatcher.GetInstance().PatchAll();
@@ -22,7 +22,7 @@ namespace CustomGadgetSites
 #endif
 		}
 
-		public virtual void Load() {}
+		public virtual void PreLoad() {}
 		public virtual void PostLoad() {}
 	}
 }

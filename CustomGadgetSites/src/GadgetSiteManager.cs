@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using UnityEngine;
@@ -10,6 +11,8 @@ using Common;
 
 namespace CustomGadgetSites
 {
+	using Object = UnityEngine.Object;
+
 	static class GadgetSiteManager
 	{
 		public class GadgetSiteInfo
@@ -78,12 +81,20 @@ namespace CustomGadgetSites
 
 			string id = claimID(site);																												$"GadgetSiteManager.createSite: parent is '{sitesParent.gameObject.getFullName()}', id is: {id}".logDbg();
 
-			var newSite = IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, sitesParent).GetComponent<GadgetSite>();
-			newSite.director = sitesParent.GetComponentInParent<IdDirector>();
-			newSite.director.persistenceDict[newSite] = id;
+			try
+			{
+				var newSite = IdHandlerUtils.CreateIdInstance<GadgetSite>(id, site.position, sitesParent).GetComponent<GadgetSite>();
+				newSite.director = sitesParent.GetComponentInParent<IdDirector>();
+				newSite.director.persistenceDict[newSite] = id;
 
-			if (register)
-				_sites[id] = site;
+				if (register)
+					_sites[id] = site;
+			}
+			catch (Exception ex)
+			{
+				Log.msg(ex, "GadgetSiteManager.createSite");
+				return false;
+			}
 
 			return true;
 		}
